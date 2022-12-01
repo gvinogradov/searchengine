@@ -1,15 +1,11 @@
 package searchengine.model;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-
+import lombok.Data;
 import javax.persistence.*;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@Entity(name = "indexes")
+@Data
+@Entity
+@Table(name = "indexes")
 public class Index {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -6,7 +6,8 @@ import javax.persistence.*;
 import java.util.List;
 
 @Data
-@Entity(name = "lemmas")
+@Entity
+@Table(name = "lemmas")
 public class Lemma {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

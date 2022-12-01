@@ -5,7 +5,7 @@ spring:
   datasource:
     username: root
     password: Ac12345678
-    url: jdbc:mysql://192.168.5.89:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
   jpa:
     properties:
       hibernate:
@@ -16,10 +16,16 @@ spring:
 
 indexing-settings:
   sites:
-    - url: https://www.lenta.ru
+    - url: https://lenta.ru
       name: Лента.ру
-    - url: https://www.skillbox.ru
+    - url: https://skillbox.ru
       name: Skillbox
-    - url: https://www.playback.ru
+    - url: https://playback.ru
       name: PlayBack.Ru
 
+parsing-settings:
+  user-agent: Opera
+  referer: https://skillbox.ru/
+  timeout: 15_000 # ms
+  thread-delay: 150 # ms
+  parallelism: 4

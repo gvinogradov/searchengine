@@ -6,8 +6,9 @@ import javax.persistence.*;
 import java.util.List;
 
 @Data
-@Entity(name = "pages")
-//@Table(indexes = @Index(name = "pg_path_idx", columnList = "path"))
+@Entity
+@Table(name = "pages")
+//@Table(@Index(name = "pg_path_idx", columnList = "path"))
 public class Page {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
