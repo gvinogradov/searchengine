@@ -1,13 +1,19 @@
 package searchengine.services;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import searchengine.config.Parser;
-import searchengine.config.Site;
+import searchengine.config.ParserCfg;
+import searchengine.config.SiteCfg;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
+import searchengine.model.Site;
+import searchengine.model.Status;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinTask;
 
 
 @Service
@@ -15,28 +21,34 @@ import java.util.concurrent.ForkJoinPool;
 public class IndexingServiceImpl implements IndexingService {
 
     private final SitesList sites;
-    private final Parser parser;
+    private final ParserCfg parserCfg;
+    private final ServicesFactory servicesFactory;
+
+    private ForkJoinPool forkJoinPool;
+    private List<SiteRecursiveReader> siteRecursiveReaders;
 
     @Override
     public IndexingResponse startIndexing() {
-        ForkJoinPool pool = new ForkJoinPool(parser.getParallelism());
-        for (Site site: sites.getSites()) {
-            SiteParser siteParser = new SiteParser(site, "/", parser);
-            pool.execute(siteParser);
-        }
+        List<SiteParser> siteParsers = new ArrayList<>();
+        forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
+        servicesFactory.getPageService().deleteAll();
+        servicesFactory.getSiteService().deleteAll();
+        SiteParser.setParserCfg(parserCfg);
+        SiteParser.setPageService(servicesFactory.getPageService());
 
-        IndexingResponse response = new IndexingResponse();
-        response.setResult(true);
-        response.setError("");
-        return response;
+        for (SiteCfg siteCfg : sites.getSites()) {
+            Site site = servicesFactory.getSiteService().addBySiteCfg(siteCfg, Status.INDEXING);
+            SiteParser siteParser = new SiteParser(site, siteCfg.getUrl() + "/");
+            siteParsers.add(siteParser);
+            forkJoinPool.execute(siteParser);
+        }
+        return new IndexingResponse(true, "");
     }
+
 
     @Override
     public IndexingResponse stopIndexing() {
-
-        IndexingResponse response = new IndexingResponse();
-        response.setResult(true);
-        response.setError("");
-        return response;
+        forkJoinPool.shutdownNow();
+        return new IndexingResponse(true, "");
     }
 }

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 @Setter
 @Component
 @ConfigurationProperties(prefix = "parsing-settings")
-public class Parser {
+public class ParserCfg {
     private String userAgent;
     private String referer;
     private int timeout;

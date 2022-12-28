@@ -5,7 +5,8 @@ spring:
   datasource:
     username: root
     password: Ac12345678
-    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+#    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://192.168.31.103:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
   jpa:
     properties:
       hibernate:
@@ -27,5 +28,6 @@ parsing-settings:
   user-agent: Opera
   referer: https://skillbox.ru/
   timeout: 15_000 # ms
-  thread-delay: 150 # ms
+  thread-delay: 250 # ms
+  treshhold: 10
   parallelism: 4
