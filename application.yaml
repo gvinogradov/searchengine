@@ -28,6 +28,6 @@ parsing-settings:
   user-agent: Opera
   referer: https://skillbox.ru/
   timeout: 15_000 # ms
-  thread-delay: 250 # ms
+  thread-delay: 150 # ms
   treshhold: 10
-  parallelism: 4
+  parallelism: 10

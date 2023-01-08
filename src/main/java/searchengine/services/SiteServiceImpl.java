@@ -1,5 +1,6 @@
 package searchengine.services;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.config.SiteCfg;
@@ -14,17 +15,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class SiteServiceImpl implements SiteService{
 
-    @Autowired
-    private SiteDAO siteDAO;
+    private final SiteDAO siteDAO;
 
-    @Autowired
-    private PageDAO pageDAO;
+    private final PageDAO pageDAO;
 
-    @Autowired
-    private PageServiceImpl pageService;
-
+    private final PageServiceImpl pageService;
 
     @Override
     public Site add(Site site) {

@@ -1,6 +1,5 @@
 package searchengine.services;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.config.ParserCfg;
@@ -13,8 +12,6 @@ import searchengine.model.Status;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
-
 
 @Service
 @RequiredArgsConstructor
@@ -22,24 +19,29 @@ public class IndexingServiceImpl implements IndexingService {
 
     private final SitesList sites;
     private final ParserCfg parserCfg;
-    private final ServicesFactory servicesFactory;
+    private final PageService pageService;
+    private final SiteService siteService;
 
+    private boolean isIndexing;
     private ForkJoinPool forkJoinPool;
-    private List<SiteRecursiveReader> siteRecursiveReaders;
+    private List<SiteParser> siteParsers;
 
     @Override
     public IndexingResponse startIndexing() {
-        List<SiteParser> siteParsers = new ArrayList<>();
+        if (isIndexing) {
+            return new IndexingResponse(false, "Идет индексация");
+        }
+        isIndexing = true;
+        SiteParser.setIsCanceled(false);
+        siteParsers = new ArrayList<>();
         forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
-        servicesFactory.getPageService().deleteAll();
-        servicesFactory.getSiteService().deleteAll();
-        SiteParser.setParserCfg(parserCfg);
-        SiteParser.setPageService(servicesFactory.getPageService());
+        pageService.deleteAll();
+        siteService.deleteAll();
 
         for (SiteCfg siteCfg : sites.getSites()) {
-            Site site = servicesFactory.getSiteService().addBySiteCfg(siteCfg, Status.INDEXING);
-            SiteParser siteParser = new SiteParser(site, siteCfg.getUrl() + "/");
-            siteParsers.add(siteParser);
+            Site site = siteService.addBySiteCfg(siteCfg, Status.INDEXING);
+            SiteParser siteParser = new SiteParser(site, siteCfg.getUrl() + "/", pageService, parserCfg);
+//            siteParsers.add(siteParser);
             forkJoinPool.execute(siteParser);
         }
         return new IndexingResponse(true, "");
@@ -48,7 +50,11 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     public IndexingResponse stopIndexing() {
-        forkJoinPool.shutdownNow();
+        if (!isIndexing) {
+            return new IndexingResponse(false, "Нет работающих процессов индексации");
+        }
+        isIndexing = false;
+        SiteParser.setIsCanceled(true);
         return new IndexingResponse(true, "");
     }
 }

@@ -1,6 +1,7 @@
 package searchengine.model;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import java.util.List;
@@ -24,7 +25,7 @@ public class Page {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
@@ -32,7 +33,7 @@ public class Page {
     private String path;
 
     @Column(nullable = false)
-    private int code;
+    private Integer code;
 
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;

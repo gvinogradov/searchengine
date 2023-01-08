@@ -1,14 +1,12 @@
 package searchengine.services;
 
-
 import lombok.Setter;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.springframework.http.HttpStatus;
 import searchengine.config.ParserCfg;
-import searchengine.config.SiteCfg;
-import searchengine.dao.PageDAO;
 import searchengine.model.Page;
 import searchengine.model.Site;
 
@@ -17,30 +15,32 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
 
 public class SiteParser extends RecursiveAction {
 
-    private volatile Site site;
-    private String currentUrl;
+    private Site site;
+    private String url;
 
-    @Setter
     private static ParserCfg parserCfg;
     private static Set existSitePath = ConcurrentHashMap.newKeySet();;
-    @Setter
-    private static PageService pageService ;
+    private static PageService pageService;
+    private static AtomicBoolean isCanceled = new AtomicBoolean();
 
-    public SiteParser(Site site, String currentUrl) {
-        this.site = site;
-        this.currentUrl = currentUrl;
-        SiteParser.existSitePath.add(currentUrl);
+    public SiteParser(Site site, String url, PageService pageService, ParserCfg parserCfg) {
+        this(site, url);
+        SiteParser.pageService = pageService;
+        SiteParser.parserCfg = parserCfg;
     }
 
-    public boolean isSubURL(String URL, String subURL) {
-        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";
-        return subURL.matches(regex) &&
-                !subURL.equals(URL);
+    public SiteParser(Site site, String url) {
+        this.site = site;
+        this.url = url;
+    }
+
+    public static void setIsCanceled(boolean isCanceled) {
+        SiteParser.isCanceled.set(isCanceled);
     }
 
     private List<String> getUrls(Document document) {
@@ -60,30 +60,49 @@ public class SiteParser extends RecursiveAction {
     }
 
 
+    private boolean isCorrectUrl(String url) throws IOException {
+        String regex = site.getUrl() + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";
+//        Connection connection = Jsoup.connect(url);
+        if (!url.matches(regex)
+                || url.equals(site.getUrl())
+                || SiteParser.existSitePath.contains(url)
+//                || !(connection.execute().statusCode() == HttpStatus.OK.value())
+                )
+        {
+            return false;
+        }
+        return true;
+    }
+
+    private Page addPage(Connection connection, Document document) throws IOException {
+        SiteParser.existSitePath.add(url);
+        int statusCode = connection.execute().statusCode();
+        String path = url.substring(site.getUrl().length());
+        return new Page(site, path, statusCode, document.toString());
+    }
+
     @Override
     protected void compute() {
-        List<SiteParser> subTasks = new ArrayList<>();
+        if (SiteParser.isCanceled.get()) {
+            return;
+        }
+        List<SiteParser> tasks = new ArrayList<>();
         try {
-            Connection connection = Jsoup.connect(currentUrl);
-            int statusCode = connection.execute().statusCode();
-            String path = currentUrl.substring(site.getUrl().length());
+            Connection connection = Jsoup.connect(url);
             Document document = getDocument(connection);
-            Page page = new Page(site, path, statusCode, document.toString());
-//            SiteParser.pageService.add(page);
-            System.out.println(currentUrl);
+            Page page = addPage(connection, document);
+            pageService.add(page);
+            System.out.println(url);
 
-            for (String url : getUrls(document)) {
-                if (!isSubURL(site.getUrl(), url)) {
-                    continue;
+            for (String child : getUrls(document)) {
+                if (isCorrectUrl(child)) {
+                    SiteParser task = new SiteParser(site, child);
+                    tasks.add(task);
                 }
-                if (!SiteParser.existSitePath.add(url)) {
-                    continue;
-                }
-
-                subTasks.add(new SiteParser(site, url));
             }
+
             Thread.sleep(parserCfg.getThreadDelay());
-            subTasks.forEach(ForkJoinTask::invokeAll);
+            ForkJoinTask.invokeAll(tasks);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {

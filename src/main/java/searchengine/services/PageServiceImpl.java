@@ -1,18 +1,19 @@
 package searchengine.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.model.Page;
 import searchengine.dao.PageDAO;
 
+import java.io.Serializable;
 import java.util.List;
 
 
 @Service
-public class PageServiceImpl implements PageService {
+@RequiredArgsConstructor
+public class PageServiceImpl implements PageService, Serializable {
 
-    @Autowired
-    private PageDAO pageDAO;
+    private final PageDAO pageDAO;
 
     @Override
     public void add(Page page) {
