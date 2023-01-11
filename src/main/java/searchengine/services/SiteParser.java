@@ -1,6 +1,5 @@
 package searchengine.services;
 
-import lombok.Setter;
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -24,7 +23,7 @@ public class SiteParser extends RecursiveAction {
     private String url;
 
     private static ParserCfg parserCfg;
-    private static Set existSitePath = ConcurrentHashMap.newKeySet();;
+    private static Set parsedUrls = ConcurrentHashMap.newKeySet();;
     private static PageService pageService;
     private static AtomicBoolean isCanceled = new AtomicBoolean();
 
@@ -51,58 +50,62 @@ public class SiteParser extends RecursiveAction {
                 .collect(Collectors.toList());
     }
 
-    private Document getDocument(Connection connection) throws IOException {
-        return connection
-                .userAgent(parserCfg.getUserAgent())
-                .referrer(parserCfg.getReferer())
-                .timeout(parserCfg.getTimeout())
-                .get();
+    private Document getDocument(Connection connection) {
+        try {
+            return connection
+                    .userAgent(SiteParser.parserCfg.getUserAgent())
+                    .referrer(SiteParser.parserCfg.getReferer())
+                    .timeout(SiteParser.parserCfg.getTimeout())
+                    .get();
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
 
     private boolean isCorrectUrl(String url) throws IOException {
         String regex = site.getUrl() + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";
-//        Connection connection = Jsoup.connect(url);
-        if (!url.matches(regex)
-                || url.equals(site.getUrl())
-                || SiteParser.existSitePath.contains(url)
-//                || !(connection.execute().statusCode() == HttpStatus.OK.value())
-                )
-        {
-            return false;
+        return url.matches(regex);
+    }
+
+    private boolean addNewUrl(String url) {
+        synchronized (SiteParser.parsedUrls) {
+            return SiteParser.parsedUrls.add(url);
         }
-        return true;
     }
-
-    private Page addPage(Connection connection, Document document) throws IOException {
-        SiteParser.existSitePath.add(url);
-        int statusCode = connection.execute().statusCode();
-        String path = url.substring(site.getUrl().length());
-        return new Page(site, path, statusCode, document.toString());
-    }
-
+    
     @Override
     protected void compute() {
-        if (SiteParser.isCanceled.get()) {
+        if (SiteParser.isCanceled.get() || !addNewUrl(url)) {
             return;
         }
         List<SiteParser> tasks = new ArrayList<>();
         try {
+
             Connection connection = Jsoup.connect(url);
+            int statusCode = connection.execute().statusCode();
+            if (statusCode != HttpStatus.OK.value()) {
+                return;
+            }
+
             Document document = getDocument(connection);
-            Page page = addPage(connection, document);
-            pageService.add(page);
+            String path = url.substring(site.getUrl().length());
+            Page page = new Page(site, path, statusCode, document.toString());
+
+            SiteParser.pageService.add(page);
             System.out.println(url);
 
             for (String child : getUrls(document)) {
                 if (isCorrectUrl(child)) {
-                    SiteParser task = new SiteParser(site, child);
-                    tasks.add(task);
+                    SiteParser siteParser = new SiteParser(site, child);
+                    siteParser.fork();
+                    tasks.add(siteParser);
+                    Thread.sleep(SiteParser.parserCfg.getThreadDelay());
                 }
             }
 
-            Thread.sleep(parserCfg.getThreadDelay());
-            ForkJoinTask.invokeAll(tasks);
+            tasks.forEach(ForkJoinTask::join);
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (IOException e) {

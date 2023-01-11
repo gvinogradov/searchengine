@@ -24,7 +24,6 @@ public class IndexingServiceImpl implements IndexingService {
 
     private boolean isIndexing;
     private ForkJoinPool forkJoinPool;
-    private List<SiteParser> siteParsers;
 
     @Override
     public IndexingResponse startIndexing() {
@@ -32,17 +31,15 @@ public class IndexingServiceImpl implements IndexingService {
             return new IndexingResponse(false, "Идет индексация");
         }
         isIndexing = true;
-        SiteParser.setIsCanceled(false);
-        siteParsers = new ArrayList<>();
+        Parser.setIsCanceled(false);
         forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
         pageService.deleteAll();
         siteService.deleteAll();
 
         for (SiteCfg siteCfg : sites.getSites()) {
             Site site = siteService.addBySiteCfg(siteCfg, Status.INDEXING);
-            SiteParser siteParser = new SiteParser(site, siteCfg.getUrl() + "/", pageService, parserCfg);
-//            siteParsers.add(siteParser);
-            forkJoinPool.execute(siteParser);
+            Parser parser = new Parser(site, "/", pageService, parserCfg);
+            forkJoinPool.execute(parser);
         }
         return new IndexingResponse(true, "");
     }
@@ -54,7 +51,7 @@ public class IndexingServiceImpl implements IndexingService {
             return new IndexingResponse(false, "Нет работающих процессов индексации");
         }
         isIndexing = false;
-        SiteParser.setIsCanceled(true);
+        Parser.setIsCanceled(true);
         return new IndexingResponse(true, "");
     }
 }
