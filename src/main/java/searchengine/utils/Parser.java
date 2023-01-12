@@ -1,17 +1,15 @@
-package searchengine.services;
+package searchengine.utils;
 
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
 import searchengine.config.ParserCfg;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.model.Status;
+import searchengine.services.FactoryService;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -30,8 +28,7 @@ public class Parser extends RecursiveAction {
     private Site site;
     private String url;
     private static ParserCfg parserCfg;
-    private static PageService pageService;
-    private static SiteService siteService;
+    private static FactoryService factoryService;
     private static Set<String> parsedUrls = ConcurrentHashMap.newKeySet();
     private static AtomicBoolean isCanceled = new AtomicBoolean();
 
@@ -40,11 +37,10 @@ public class Parser extends RecursiveAction {
         this.url = url;
     }
 
-    public Parser(Site site, String url, PageService pageService, SiteService siteService, ParserCfg parserCfg) {
+    public Parser(Site site, String url, FactoryService factoryService, ParserCfg parserCfg) {
         this(site, url);
         Parser.parserCfg = parserCfg;
-        Parser.pageService = pageService;
-        Parser.siteService = siteService;
+        Parser.factoryService = factoryService;
     }
 
     public static void setIsCanceled(boolean isCanceled) {
@@ -78,29 +74,15 @@ public class Parser extends RecursiveAction {
         page.setCode(response.statusCode());
         page.setPath(path);
         page.setContent(document.toString());
-        Parser.pageService.save(page);
+        factoryService.getPageService().save(page);
         return page;
-    }
-
-    private Connection.Response getResponse(String url) {
-        Connection.Response response = null;
-        try {
-            response = Jsoup.connect(url)
-                    .userAgent(Parser.parserCfg.getUserAgent())
-                    .referrer(Parser.parserCfg.getReferer())
-                    .timeout(Parser.parserCfg.getTimeout())
-                    .execute();
-        } catch (IOException e) {
-            log.error(e.getMessage());
-        }
-        return response;
     }
 
     private void updateSiteStatus(Status status, String lastError) {
         site.setStatus(status);
         site.setLastError(lastError);
         site.setStatusTime(LocalDateTime.now());
-        siteService.save(site);
+        factoryService.getSiteService().save(site);
     }
 
     @Override
@@ -116,7 +98,7 @@ public class Parser extends RecursiveAction {
         List<Parser> tasks = new ArrayList<>();
         try {
 
-            Connection.Response response = getResponse(url);
+            Connection.Response response = factoryService.getNetworkService().getResponse(url);
             if (response.statusCode() != HttpStatus.OK.value()) {
                 return;
             }
@@ -132,7 +114,7 @@ public class Parser extends RecursiveAction {
                 Parser newTask = new Parser(site, child);
                 tasks.add(newTask);
             }
-            Thread.sleep(Parser.parserCfg.getThreadDelay());
+            Thread.sleep(parserCfg.getThreadDelay());
             ForkJoinTask.invokeAll(tasks);
         } catch (Exception e) {
             log.error("error - " + e.getMessage());

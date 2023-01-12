@@ -3,7 +3,7 @@ package searchengine.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.model.Page;
-import searchengine.dao.PageDAO;
+import searchengine.repository.PageRepository;
 
 import java.io.Serializable;
 import java.util.List;
@@ -13,21 +13,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PageServiceImpl implements PageService, Serializable {
 
-    private final PageDAO pageDAO;
+    private final PageRepository pageRepository;
 
     @Override
     public void save(Page page) {
-        pageDAO.saveAndFlush(page);
+        pageRepository.saveAndFlush(page);
     }
 
     @Override
     public void deleteAll() {
-        pageDAO.deleteAll();
+        pageRepository.deleteAll();
     }
 
     @Override
     public boolean existPagePath(int siteId, String path) {
-        List<Page> pageList = pageDAO.getPagesByPath(siteId, path);
+        List<Page> pageList = pageRepository.getPagesByPath(siteId, path);
         if (pageList.size() > 0) {
             return true;
         }
@@ -36,6 +36,6 @@ public class PageServiceImpl implements PageService, Serializable {
 
     @Override
     public int getPagesCount(int siteId) {
-        return pageDAO.getPagesCount(siteId);
+        return pageRepository.getPagesCount(siteId);
     }
 }

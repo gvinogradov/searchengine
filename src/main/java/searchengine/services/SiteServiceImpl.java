@@ -1,15 +1,11 @@
 package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import searchengine.config.SiteCfg;
-import searchengine.exception.ResourceNotFoundException;
-import searchengine.model.Page;
 import searchengine.model.Site;
-import searchengine.dao.PageDAO;
-import searchengine.dao.SiteDAO;
 import searchengine.model.Status;
+import searchengine.repository.SiteRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,26 +14,41 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SiteServiceImpl implements SiteService{
 
-    private final SiteDAO siteDAO;
+    private final SiteRepository siteRepository;
 
     @Override
     public Site save(Site site) {
-        return siteDAO.saveAndFlush(site);
+        return siteRepository.saveAndFlush(site);
     }
 
     @Override
     public Site getByUrl(String url) {
-        return siteDAO.getByUrl(url);
+        return siteRepository.getByUrl(url);
+    }
+
+    @Override
+    public Site createSite(SiteCfg siteCfg) {
+        Site site = new Site();
+        site.setUrl(siteCfg.getUrl());
+        site.setName(siteCfg.getName());
+        site.setStatus(Status.INDEXING);
+        site.setStatusTime(LocalDateTime.now());
+        return site;
     }
 
     @Override
     public List<Site> getAll() {
-        return siteDAO.findAll();
+        return siteRepository.findAll();
     }
 
     @Override
     public void deleteAll() {
-        siteDAO.deleteAll();
+        siteRepository.deleteAll();
+    }
+
+    @Override
+    public boolean isIndexing() {
+      return siteRepository.findAnyStatus(Status.INDEXING) != null;
     }
 
 }

@@ -23,14 +23,10 @@ import java.util.Random;
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final Random random = new Random();
-    private final SiteService siteService;
-    private final PageService pageService;
+    private final FactoryService factoryService;
+//    private final SiteService siteService;
+//    private final PageService pageService;
     private final SitesList sitesList;
-
-    public boolean isIndexing(List<Site> sites) {
-        return (sites == null) ? false : sites.stream()
-                .anyMatch(site -> site.getStatus() == Status.INDEXING);
-    }
 
     private Long localDataTimeToMills(LocalDateTime dateTime) {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault());
@@ -43,7 +39,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         DetailedStatisticsItem item = new DetailedStatisticsItem();
         item.setName(site.getName());
         item.setUrl(site.getUrl());
-        item.setPages(pageService.getPagesCount(site.getId()));
+        item.setPages(factoryService.getPageService().getPagesCount(site.getId()));
 //            todo: сделать получение количества лемм из сервиса
         item.setLemmas(random.nextInt(10_000)); // lemmasService.getLemmasCount();
 
@@ -71,7 +67,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
         for(SiteCfg siteCfg: sitesList.getSites()) {
-            Site site = siteService.getByUrl(siteCfg.getUrl());
+            Site site = factoryService.getSiteService().getByUrl(siteCfg.getUrl());
             DetailedStatisticsItem item = (site == null) ?
                     createSiteStatistic(siteCfg) :
                     getSiteStatistic(site);
@@ -80,7 +76,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             detailed.add(item);
         }
 
-        total.setIndexing(isIndexing(siteService.getAll()));
+        total.setIndexing(factoryService.getSiteService().isIndexing());
         StatisticsData statisticsData = new StatisticsData();
         statisticsData.setTotal(total);
         statisticsData.setDetailed(detailed);

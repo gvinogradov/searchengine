@@ -1,6 +1,8 @@
 package searchengine.services;
 
+import com.mysql.cj.log.Log;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import searchengine.config.ParserCfg;
 import searchengine.config.SiteCfg;
@@ -8,20 +10,19 @@ import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.Site;
 import searchengine.model.Status;
+import searchengine.utils.Parser;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class IndexingServiceImpl implements IndexingService {
 
     private final SitesList sites;
     private final ParserCfg parserCfg;
-    private final PageService pageService;
-    private final SiteService siteService;
+    private final FactoryService factoryService;
 
     private boolean isIndexing;
     private ForkJoinPool forkJoinPool;
@@ -34,13 +35,19 @@ public class IndexingServiceImpl implements IndexingService {
         isIndexing = true;
         Parser.setIsCanceled(false);
         forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
-        pageService.deleteAll();
-        siteService.deleteAll();
+        factoryService.getPageService().deleteAll();
+        factoryService.getSiteService().deleteAll();
 
         for (SiteCfg siteCfg : sites.getSites()) {
-            Site site = createSite(siteCfg);
-            siteService.save(site);
-            Parser parser = new Parser(site, site.getUrl() + "/", pageService, siteService, parserCfg);
+            boolean isAvailable = factoryService.getNetworkService().checkSiteConnection(siteCfg.getUrl());
+            if (isAvailable == false) {
+                log.error("сайт " + siteCfg.getUrl() + " не доступен");
+                continue;
+            }
+
+            Site site = factoryService.getSiteService().createSite(siteCfg);
+            factoryService.getSiteService().save(site);
+            Parser parser = new Parser(site, site.getUrl() + "/", factoryService, parserCfg);
             forkJoinPool.execute(parser);
         }
         return new IndexingResponse(true, "");
@@ -56,14 +63,4 @@ public class IndexingServiceImpl implements IndexingService {
         return new IndexingResponse(true, "");
     }
 
-    @Override
-    public Site createSite(SiteCfg siteCfg) {
-        Site site = new Site();
-        site.setUrl(siteCfg.getUrl());
-        site.setName(siteCfg.getName());
-        site.setStatus(Status.INDEXING);
-        site.setStatusTime(LocalDateTime.now());
-        site.setLastError("");
-        return site;
-    }
 }

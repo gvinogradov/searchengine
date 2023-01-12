@@ -12,6 +12,8 @@ import java.util.List;
 public interface SiteService {
     Site save(Site site);
     Site getByUrl(String url);
+    Site createSite(SiteCfg siteCfg);
     List<Site> getAll();
     void deleteAll();
+    boolean isIndexing();
 }
