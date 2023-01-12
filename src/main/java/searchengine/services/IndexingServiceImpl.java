@@ -9,6 +9,7 @@ import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.Site;
 import searchengine.model.Status;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ForkJoinPool;
@@ -37,13 +38,13 @@ public class IndexingServiceImpl implements IndexingService {
         siteService.deleteAll();
 
         for (SiteCfg siteCfg : sites.getSites()) {
-            Site site = siteService.addBySiteCfg(siteCfg, Status.INDEXING);
-            Parser parser = new Parser(site, "/", pageService, parserCfg);
+            Site site = createSite(siteCfg);
+            siteService.save(site);
+            Parser parser = new Parser(site, site.getUrl() + "/", pageService, siteService, parserCfg);
             forkJoinPool.execute(parser);
         }
         return new IndexingResponse(true, "");
     }
-
 
     @Override
     public IndexingResponse stopIndexing() {
@@ -53,5 +54,16 @@ public class IndexingServiceImpl implements IndexingService {
         isIndexing = false;
         Parser.setIsCanceled(true);
         return new IndexingResponse(true, "");
+    }
+
+    @Override
+    public Site createSite(SiteCfg siteCfg) {
+        Site site = new Site();
+        site.setUrl(siteCfg.getUrl());
+        site.setName(siteCfg.getName());
+        site.setStatus(Status.INDEXING);
+        site.setStatusTime(LocalDateTime.now());
+        site.setLastError("");
+        return site;
     }
 }

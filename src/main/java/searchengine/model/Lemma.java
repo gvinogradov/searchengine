@@ -23,6 +23,6 @@ public class Lemma {
     @Column(nullable = false)
     private int frequency;
 
-    @OneToMany(mappedBy = "lemma")
-    private List<Index> indexes;
+//    @OneToMany(mappedBy = "lemma")
+//    private List<Index> indexes;
 }

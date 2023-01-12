@@ -6,7 +6,7 @@ import searchengine.model.Site;
 
 public interface PageService {
 
-    void add(Page page);
+    void save(Page page);
     void deleteAll();
     boolean existPagePath(int siteId, String path);
 }

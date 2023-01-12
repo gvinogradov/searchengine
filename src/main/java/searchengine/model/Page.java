@@ -38,6 +38,6 @@ public class Page {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
-    @OneToMany(mappedBy = "page")
-    private List<Index> indexes;
+//    @OneToMany(mappedBy = "page")
+//    private List<Index> indexes;
 }

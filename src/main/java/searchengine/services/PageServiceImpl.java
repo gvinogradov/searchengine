@@ -16,7 +16,7 @@ public class PageServiceImpl implements PageService, Serializable {
     private final PageDAO pageDAO;
 
     @Override
-    public void add(Page page) {
+    public void save(Page page) {
         pageDAO.saveAndFlush(page);
     }
 

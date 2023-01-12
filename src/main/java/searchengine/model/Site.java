@@ -30,9 +30,9 @@ public class Site {
     @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     String name;
 
-    @OneToMany(mappedBy = "site")
-    List<Page> pages;
+//    @OneToMany(mappedBy = "site")
+//    List<Page> pages;
 
-    @OneToMany(mappedBy = "site")
-    List<Lemma> lemmas;
+//    @OneToMany(mappedBy = "site")
+//    List<Lemma> lemmas;
 }
