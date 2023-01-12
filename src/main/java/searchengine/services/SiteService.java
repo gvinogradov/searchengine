@@ -11,5 +11,7 @@ import java.util.List;
 @Service
 public interface SiteService {
     Site save(Site site);
+    Site getByUrl(String url);
+    List<Site> getAll();
     void deleteAll();
 }

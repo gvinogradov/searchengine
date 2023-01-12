@@ -23,6 +23,8 @@ indexing-settings:
       name: Skillbox
 #    - url: https://playback.ru
 #      name: PlayBack.Ru
+    - url: https://dombulgakova.ru
+      name: Булгаковский дом
 
 parsing-settings:
   user-agent: SearchBot/2.0

@@ -105,8 +105,11 @@ public class Parser extends RecursiveAction {
 
     @Override
     protected void compute() {
-        if (Parser.isCanceled.get() || !addNewUrl(url)) {
-            updateSiteStatus(Status.FAILED, "Индексация остановлена");
+        if (Parser.isCanceled.get()) {
+            updateSiteStatus(Status.FAILED, "Индексация остановлена пользователем");
+            return;
+        }
+        if (!addNewUrl(url)) {
             return;
         }
 

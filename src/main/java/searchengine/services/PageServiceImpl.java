@@ -33,4 +33,9 @@ public class PageServiceImpl implements PageService, Serializable {
         }
         return false;
     }
+
+    @Override
+    public int getPagesCount(int siteId) {
+        return pageDAO.getPagesCount(siteId);
+    }
 }

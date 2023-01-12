@@ -26,7 +26,18 @@ public class SiteServiceImpl implements SiteService{
     }
 
     @Override
+    public Site getByUrl(String url) {
+        return siteDAO.getByUrl(url);
+    }
+
+    @Override
+    public List<Site> getAll() {
+        return siteDAO.findAll();
+    }
+
+    @Override
     public void deleteAll() {
         siteDAO.deleteAll();
     }
+
 }

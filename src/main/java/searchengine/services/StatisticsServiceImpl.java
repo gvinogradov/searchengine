@@ -8,7 +8,12 @@ import searchengine.dto.statistics.DetailedStatisticsItem;
 import searchengine.dto.statistics.StatisticsData;
 import searchengine.dto.statistics.StatisticsResponse;
 import searchengine.dto.statistics.TotalStatistics;
+import searchengine.model.Site;
+import searchengine.model.Status;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -18,47 +23,70 @@ import java.util.Random;
 public class StatisticsServiceImpl implements StatisticsService {
 
     private final Random random = new Random();
-    private final SitesList sites;
+    private final SiteService siteService;
+    private final PageService pageService;
+    private final SitesList sitesList;
 
+    public boolean isIndexing(List<Site> sites) {
+        return (sites == null) ? false : sites.stream()
+                .anyMatch(site -> site.getStatus() == Status.INDEXING);
+    }
+
+    private Long localDataTimeToMills(LocalDateTime dateTime) {
+        ZonedDateTime zonedDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault());
+        return zonedDateTime.toInstant().toEpochMilli();
+    }
+
+//    todo: статистика когда индексация еще не запускалась
+
+    DetailedStatisticsItem getSiteStatistic(Site site) {
+        DetailedStatisticsItem item = new DetailedStatisticsItem();
+        item.setName(site.getName());
+        item.setUrl(site.getUrl());
+        item.setPages(pageService.getPagesCount(site.getId()));
+//            todo: сделать получение количества лемм из сервиса
+        item.setLemmas(random.nextInt(10_000)); // lemmasService.getLemmasCount();
+
+        item.setStatusTime(localDataTimeToMills(site.getStatusTime()));
+        item.setStatus(site.getStatus().toString());
+        item.setError(site.getLastError());
+        return item;
+    }
+
+    DetailedStatisticsItem createSiteStatistic(SiteCfg siteCfg) {
+        DetailedStatisticsItem item = new DetailedStatisticsItem();
+        item.setName(siteCfg.getName());
+        item.setUrl(siteCfg.getUrl());
+        item.setStatusTime(localDataTimeToMills(LocalDateTime.now()));
+        item.setStatus(Status.FAILED.toString());
+        item.setError("Индексация не запускалась");
+        return item;
+    }
 
     @Override
     public StatisticsResponse getStatistics() {
-        String[] statuses = { "INDEXED", "FAILED", "INDEXING" };
-        String[] errors = {
-                "Ошибка индексации: главная страница сайта не доступна",
-                "Ошибка индексации: сайт не доступен",
-                ""
-        };
-
         TotalStatistics total = new TotalStatistics();
-        total.setSites(sites.getSites().size());
-        total.setIndexing(true);
+        total.setSites(sitesList.getSites().size());
+
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
-        List<SiteCfg> sitesList = sites.getSites();
-        for(int i = 0; i < sitesList.size(); i++) {
-            SiteCfg siteCfg = sitesList.get(i);
-            DetailedStatisticsItem item = new DetailedStatisticsItem();
-            item.setName(siteCfg.getName());
-            item.setUrl(siteCfg.getUrl());
-            int pages = random.nextInt(1_000);
-            int lemmas = pages * random.nextInt(1_000);
-            item.setPages(pages);
-            item.setLemmas(lemmas);
-            item.setStatus(statuses[i % 3]);
-            item.setError(errors[i % 3]);
-            item.setStatusTime(System.currentTimeMillis() -
-                    (random.nextInt(10_000)));
-            total.setPages(total.getPages() + pages);
-            total.setLemmas(total.getLemmas() + lemmas);
+        for(SiteCfg siteCfg: sitesList.getSites()) {
+            Site site = siteService.getByUrl(siteCfg.getUrl());
+            DetailedStatisticsItem item = (site == null) ?
+                    createSiteStatistic(siteCfg) :
+                    getSiteStatistic(site);
+            total.setPages(total.getPages() + item.getPages());
+            total.setLemmas(total.getLemmas() + item.getLemmas());
             detailed.add(item);
         }
 
+        total.setIndexing(isIndexing(siteService.getAll()));
+        StatisticsData statisticsData = new StatisticsData();
+        statisticsData.setTotal(total);
+        statisticsData.setDetailed(detailed);
+
         StatisticsResponse response = new StatisticsResponse();
-        StatisticsData data = new StatisticsData();
-        data.setTotal(total);
-        data.setDetailed(detailed);
-        response.setStatistics(data);
+        response.setStatistics(statisticsData);
         response.setResult(true);
         return response;
     }
