@@ -3,11 +3,13 @@ package searchengine.services;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.config.SiteCfg;
+import searchengine.config.SitesList;
 import searchengine.model.Site;
 import searchengine.model.Status;
 import searchengine.repository.SiteRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -15,6 +17,7 @@ import java.util.List;
 public class SiteServiceImpl implements SiteService{
 
     private final SiteRepository siteRepository;
+    private final NetworkService networkService;
 
     @Override
     public Site save(Site site) {
@@ -28,12 +31,39 @@ public class SiteServiceImpl implements SiteService{
 
     @Override
     public Site createSite(SiteCfg siteCfg) {
-        Site site = new Site();
-        site.setUrl(siteCfg.getUrl());
-        site.setName(siteCfg.getName());
-        site.setStatus(Status.INDEXING);
+        Site site = null;
+        boolean isAvailable = networkService
+                .checkSiteConnection(siteCfg.getUrl());
+        String lastError = isAvailable ? "" : "Сайт не доступен";
+        Status status = isAvailable ? Status.INDEXING : Status.FAILED;
+        site = getByUrl(siteCfg.getUrl());
+        if (site == null) {
+            site = new Site();
+            site.setUrl(siteCfg.getUrl());
+            site.setName(siteCfg.getName());
+        }
+        site.setStatus(status);
         site.setStatusTime(LocalDateTime.now());
+        site.setLastError(lastError);
         return site;
+    }
+
+    @Override
+    public List<Site> getSitesToParsing(SitesList sites) {
+        List<Site> sitesToParsing = new ArrayList<>();
+        for (SiteCfg siteCfg : sites.getSites()) {
+            Site site = createSite(siteCfg);
+            save(site);
+            if (site.getLastError().isBlank()) {
+                sitesToParsing.add(site);
+            }
+        }
+        return sitesToParsing;
+    }
+
+    @Override
+    public Site addSiteToParsing(Site site) {
+        return null;
     }
 
     @Override
@@ -49,6 +79,11 @@ public class SiteServiceImpl implements SiteService{
     @Override
     public boolean isIndexing() {
       return siteRepository.findAnyStatus(Status.INDEXING) != null;
+    }
+
+    @Override
+    public void dropIndexingStatus() {
+        siteRepository.updateStatus(Status.INDEXING, Status.FAILED);
     }
 
 }

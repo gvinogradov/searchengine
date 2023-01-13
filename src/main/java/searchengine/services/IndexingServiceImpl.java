@@ -1,64 +1,63 @@
 package searchengine.services;
 
-import com.mysql.cj.log.Log;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import searchengine.config.ParserCfg;
-import searchengine.config.SiteCfg;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
 import searchengine.model.Site;
-import searchengine.model.Status;
 import searchengine.utils.Parser;
 
-import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class IndexingServiceImpl implements IndexingService {
 
     private final SitesList sites;
     private final ParserCfg parserCfg;
     private final FactoryService factoryService;
+    private final ForkJoinPool forkJoinPool;
 
-    private boolean isIndexing;
-    private ForkJoinPool forkJoinPool;
+
+    public IndexingServiceImpl(SitesList sites, ParserCfg parserCfg, FactoryService factoryService) {
+        this.sites = sites;
+        this.parserCfg = parserCfg;
+        this.factoryService = factoryService;
+        this.forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
+        this.factoryService.getSiteService().dropIndexingStatus();
+    }
+
+
 
     @Override
     public IndexingResponse startIndexing() {
-        if (isIndexing) {
+        if (factoryService.getSiteService().isIndexing()) {
             return new IndexingResponse(false, "Идет индексация");
         }
-        isIndexing = true;
         Parser.setIsCanceled(false);
-        forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
+
         factoryService.getPageService().deleteAll();
-        factoryService.getSiteService().deleteAll();
+//        factoryService.getSiteService().deleteAll();
 
-        for (SiteCfg siteCfg : sites.getSites()) {
-            boolean isAvailable = factoryService.getNetworkService().checkSiteConnection(siteCfg.getUrl());
-            if (isAvailable == false) {
-                log.error("сайт " + siteCfg.getUrl() + " не доступен");
-                continue;
-            }
-
-            Site site = factoryService.getSiteService().createSite(siteCfg);
-            factoryService.getSiteService().save(site);
-            Parser parser = new Parser(site, site.getUrl() + "/", factoryService, parserCfg);
-            forkJoinPool.execute(parser);
+        List<Site> sitesToParsing = factoryService.getSiteService().getSitesToParsing(sites);
+        if (sitesToParsing.size() == 0) {
+            return new IndexingResponse(false, "Нет доступных сайтов для индексации");
         }
+
+        List<Parser> parserList = new ArrayList<>();
+        for (Site site: sitesToParsing) {
+            parserList.add(new Parser(site, site.getUrl() + "/", factoryService, parserCfg));
+        }
+
+        parserList.forEach(p -> forkJoinPool.execute(p));
         return new IndexingResponse(true, "");
     }
 
     @Override
     public IndexingResponse stopIndexing() {
-        if (!isIndexing) {
-            return new IndexingResponse(false, "Нет работающих процессов индексации");
-        }
-        isIndexing = false;
         Parser.setIsCanceled(true);
         return new IndexingResponse(true, "");
     }
