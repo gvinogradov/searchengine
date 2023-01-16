@@ -24,16 +24,11 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     private final Random random = new Random();
     private final FactoryService factoryService;
-//    private final SiteService siteService;
-//    private final PageService pageService;
-    private final SitesList sitesList;
 
     private Long localDataTimeToMills(LocalDateTime dateTime) {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault());
         return zonedDateTime.toInstant().toEpochMilli();
     }
-
-//    todo: статистика когда индексация еще не запускалась
 
     DetailedStatisticsItem getSiteStatistic(Site site) {
         DetailedStatisticsItem item = new DetailedStatisticsItem();
@@ -49,28 +44,15 @@ public class StatisticsServiceImpl implements StatisticsService {
         return item;
     }
 
-    DetailedStatisticsItem createSiteStatistic(SiteCfg siteCfg) {
-        DetailedStatisticsItem item = new DetailedStatisticsItem();
-        item.setName(siteCfg.getName());
-        item.setUrl(siteCfg.getUrl());
-        item.setStatusTime(localDataTimeToMills(LocalDateTime.now()));
-        item.setStatus(Status.FAILED.toString());
-        item.setError("Индексация не запускалась");
-        return item;
-    }
-
     @Override
     public StatisticsResponse getStatistics() {
+        List<Site> sites = factoryService.getSiteService().getAll();
         TotalStatistics total = new TotalStatistics();
-        total.setSites(sitesList.getSites().size());
-
+        total.setSites(sites.size());
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
-        for(SiteCfg siteCfg: sitesList.getSites()) {
-            Site site = factoryService.getSiteService().getByUrl(siteCfg.getUrl());
-            DetailedStatisticsItem item = (site == null) ?
-                    createSiteStatistic(siteCfg) :
-                    getSiteStatistic(site);
+        for(Site site: sites) {
+            DetailedStatisticsItem item = getSiteStatistic(site);
             total.setPages(total.getPages() + item.getPages());
             total.setLemmas(total.getLemmas() + item.getLemmas());
             detailed.add(item);

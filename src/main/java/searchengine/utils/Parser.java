@@ -43,8 +43,16 @@ public class Parser extends RecursiveAction {
         Parser.factoryService = factoryService;
     }
 
+    public static void prepareParser() {
+        parsedUrls.clear();
+    }
+
     public static void setIsCanceled(boolean isCanceled) {
         Parser.isCanceled.set(isCanceled);
+    }
+
+    public static boolean getIsCanceled() {
+        return isCanceled.get();
     }
 
     public boolean isSubURL(String URL, String subURL) {
@@ -78,17 +86,12 @@ public class Parser extends RecursiveAction {
         return page;
     }
 
-    private void updateSiteStatus(Status status, String lastError) {
-        site.setStatus(status);
-        site.setLastError(lastError);
-        site.setStatusTime(LocalDateTime.now());
-        factoryService.getSiteService().save(site);
-    }
+
 
     @Override
     protected void compute() {
         if (Parser.isCanceled.get()) {
-            updateSiteStatus(Status.FAILED, "Индексация остановлена пользователем");
+//            factoryService.getSiteService().updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
             return;
         }
         if (!addNewUrl(url)) {
@@ -103,7 +106,7 @@ public class Parser extends RecursiveAction {
                 return;
             }
             addPage(response);
-            updateSiteStatus(Status.INDEXING, "");
+            factoryService.getSiteService().updateSiteStatus(site, Status.INDEXING, "");
             log.info(url + " - " + parsedUrls.size());
 
             for (String child: getUrls(response.parse())) {

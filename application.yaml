@@ -19,12 +19,16 @@ indexing-settings:
   sites:
 #    - url: https://lenta.ru
 #      name: Лента.ру
-    - url: https://skillbox.ru
-      name: Skillbox
+#    - url: https://skillbox.ru
+#      name: Skillbox
 #    - url: https://playback.ru
 #      name: PlayBack.Ru
-    - url: https://dombulgakova.ru
-      name: Булгаковский дом
+#    - url: https://dombulgakova.ru
+#      name: Булгаковский дом
+    - url: http://cimus.biz
+      name: DOM
+    - url: https://exotic-zoo.ru
+      name: DOMIK
     - url: https://lalabla.ru
       name: Не существующий
 

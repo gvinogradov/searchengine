@@ -14,7 +14,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class SiteServiceImpl implements SiteService{
+public class SiteServiceImpl implements SiteService {
 
     private final SiteRepository siteRepository;
     private final NetworkService networkService;
@@ -22,6 +22,11 @@ public class SiteServiceImpl implements SiteService{
     @Override
     public Site save(Site site) {
         return siteRepository.saveAndFlush(site);
+    }
+
+    @Override
+    public void saveAll(List<Site> sites) {
+        siteRepository.saveAllAndFlush(sites);
     }
 
     @Override
@@ -36,12 +41,12 @@ public class SiteServiceImpl implements SiteService{
                 .checkSiteConnection(siteCfg.getUrl());
         String lastError = isAvailable ? "" : "Сайт не доступен";
         Status status = isAvailable ? Status.INDEXING : Status.FAILED;
-        site = getByUrl(siteCfg.getUrl());
-        if (site == null) {
-            site = new Site();
-            site.setUrl(siteCfg.getUrl());
-            site.setName(siteCfg.getName());
-        }
+//        site = getByUrl(siteCfg.getUrl());
+//        if (site == null) {
+        site = new Site();
+        site.setUrl(siteCfg.getUrl());
+        site.setName(siteCfg.getName());
+//        }
         site.setStatus(status);
         site.setStatusTime(LocalDateTime.now());
         site.setLastError(lastError);
@@ -53,10 +58,10 @@ public class SiteServiceImpl implements SiteService{
         List<Site> sitesToParsing = new ArrayList<>();
         for (SiteCfg siteCfg : sites.getSites()) {
             Site site = createSite(siteCfg);
-            save(site);
-            if (site.getLastError().isBlank()) {
-                sitesToParsing.add(site);
-            }
+//            save(site);
+//            if (site.getLastError().isBlank()) {
+            sitesToParsing.add(site);
+//            }
         }
         return sitesToParsing;
     }
@@ -78,12 +83,20 @@ public class SiteServiceImpl implements SiteService{
 
     @Override
     public boolean isIndexing() {
-      return siteRepository.findAnyStatus(Status.INDEXING) != null;
+        return siteRepository.findAnyStatus(Status.INDEXING) != null;
     }
 
     @Override
     public void dropIndexingStatus() {
         siteRepository.updateStatus(Status.INDEXING, Status.FAILED);
+    }
+
+    @Override
+    public void updateSiteStatus(Site site, Status status, String lastError) {
+        site.setStatus(status);
+        site.setLastError(lastError);
+        site.setStatusTime(LocalDateTime.now());
+        save(site);
     }
 
 }
