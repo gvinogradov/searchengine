@@ -32,27 +32,29 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     public IndexingResponse startIndexing() {
-        if (factoryService.getSiteService().isIndexing()) {
+        if (factoryService.getSiteService().isIndexing())
+        {
             return new IndexingResponse(false, "Идет индексация");
         }
-//      todo: проверить работающие потоки и дождаться завершения
+
         Parser.setIsCanceled(false);
 
-        factoryService.getPageService().deleteAll();
-        factoryService.getSiteService().deleteAll();
-        List<Site> sitesToParsing = factoryService.getSiteService().getSitesToParsing(sites);
-        factoryService.getSiteService().saveAll(sitesToParsing);
+        Thread thread = new Thread(() -> {
+            factoryService.getPageService().deleteAll();
+            factoryService.getSiteService().deleteAll();
 
-        threadPoolExecutor = new ThreadPoolExecutor(0, sitesToParsing.size(),
-                0L, TimeUnit.SECONDS, new SynchronousQueue<>());
+            List<Site> sitesToParsing = factoryService.getSiteService().getSitesToParsing(sites);
+            factoryService.getSiteService().saveAll(sitesToParsing);
 
-        Parser.prepareParser();
-        for (Site site : sitesToParsing) {
-            if (site.getStatus() == Status.INDEXING) {
-                ThreadHandler task = new ThreadHandler(parserCfg, factoryService, site);
-                threadPoolExecutor.submit(task);
+            for (Site site : sitesToParsing) {
+                if (site.getStatus() == Status.INDEXING) {
+                    ThreadHandler task = new ThreadHandler(parserCfg, factoryService, site);
+                    Thread parseSite = new Thread(task);
+                    parseSite.start();
+                }
             }
-        }
+        });
+        thread.start();
 
         return new IndexingResponse(true, "");
     }

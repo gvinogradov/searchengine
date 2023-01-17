@@ -14,50 +14,48 @@ import searchengine.services.FactoryService;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveAction;
+import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Slf4j
-public class Parser extends RecursiveAction {
+public class Parser extends RecursiveTask<Boolean> {
 
     private Site site;
     private String url;
+    private Set<String> parsedUrls;
     private static ParserCfg parserCfg;
     private static FactoryService factoryService;
-    private static Set<String> parsedUrls = ConcurrentHashMap.newKeySet();
     private static AtomicBoolean isCanceled = new AtomicBoolean();
 
-    public Parser(Site site, String url) {
+    public Parser(Site site, String url, Set<String> parsedUrls) {
         this.site = site;
         this.url = url;
+        this.parsedUrls = parsedUrls;
     }
 
     public Parser(Site site, String url, FactoryService factoryService, ParserCfg parserCfg) {
-        this(site, url);
+        this(site, url, new HashSet<>());
         Parser.parserCfg = parserCfg;
         Parser.factoryService = factoryService;
-    }
-
-    public static void prepareParser() {
-        parsedUrls.clear();
     }
 
     public static void setIsCanceled(boolean isCanceled) {
         Parser.isCanceled.set(isCanceled);
     }
 
-    public static boolean getIsCanceled() {
-        return isCanceled.get();
-    }
-
+//    todo: переделать regex
     public boolean isSubURL(String URL, String subURL) {
-        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";
+        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";;
+//        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]+";
         return subURL.matches(regex);
+//        return  (subURL.startsWith(URL) || subURL.startsWith("/")) && !subURL.endsWith("#");
     }
 
     private List<String> getUrls(Document document) {
@@ -69,8 +67,8 @@ public class Parser extends RecursiveAction {
     }
 
     private boolean addNewUrl(String url) {
-        synchronized (Parser.parsedUrls) {
-            return Parser.parsedUrls.add(url);
+        synchronized (parsedUrls) {
+            return parsedUrls.add(url);
         }
     }
 
@@ -86,41 +84,47 @@ public class Parser extends RecursiveAction {
         return page;
     }
 
-
-
     @Override
-    protected void compute() {
-        if (Parser.isCanceled.get()) {
-//            factoryService.getSiteService().updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
-            return;
+    protected Boolean compute() {
+        if (Parser.isCanceled.get())
+        {
+            return false;
         }
-        if (!addNewUrl(url)) {
-            return;
+        if (!addNewUrl(url))
+        {
+            return true;
         }
 
+        boolean parsingResult = true;
         List<Parser> tasks = new ArrayList<>();
         try {
-
             Connection.Response response = factoryService.getNetworkService().getResponse(url);
-            if (response.statusCode() != HttpStatus.OK.value()) {
-                return;
+            if ((response == null)
+                    || (response.statusCode() != HttpStatus.OK.value())
+                    || (!response.contentType().equalsIgnoreCase(parserCfg.getContentType())))
+            {
+                return true;
             }
+
             addPage(response);
             factoryService.getSiteService().updateSiteStatus(site, Status.INDEXING, "");
             log.info(url + " - " + parsedUrls.size());
 
-            for (String child: getUrls(response.parse())) {
-                if (!isSubURL(site.getUrl(), child) ||
-                        parsedUrls.contains(child)) {
-                    continue;
+            for (String child : getUrls(response.parse())) {
+                if (isSubURL(site.getUrl(), child) &&
+                        !parsedUrls.contains(child)) {
+                    Parser newTask = new Parser(site, child, parsedUrls);
+                    tasks.add(newTask);
                 }
-                Parser newTask = new Parser(site, child);
-                tasks.add(newTask);
             }
             Thread.sleep(parserCfg.getThreadDelay());
-            ForkJoinTask.invokeAll(tasks);
+
+            for (ForkJoinTask task: tasks) {
+                parsingResult = parsingResult && (Boolean) task.invoke();
+            }
         } catch (Exception e) {
             log.error("error - " + e.getMessage());
         }
+        return parsingResult;
     }
 }

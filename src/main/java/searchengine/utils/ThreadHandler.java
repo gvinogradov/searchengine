@@ -34,13 +34,10 @@ public class ThreadHandler implements Runnable {
         try {
             Long start = System.currentTimeMillis();
             Parser parser = new Parser(site, site.getUrl() + "/", factoryService, parserCfg);
-            ForkJoinTask task = forkJoinPool.submit(parser);
-            task.join();
-            if (task.isDone()) {
+            if (forkJoinPool.invoke(parser)) {
                 factoryService.getSiteService().updateSiteStatus(site, Status.INDEXED, "");
                 log.info(site.getUrl() + " - " + String.valueOf(System.currentTimeMillis() - start));
-            }
-            if (Parser.getIsCanceled()) {
+            } else {
                 factoryService.getSiteService().updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
             }
         } catch (Exception e) {

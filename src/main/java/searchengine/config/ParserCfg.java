@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 public class ParserCfg {
     private String userAgent;
     private String referer;
+    private String contentType;
     private int timeout;
     private int treshhold;
     private int parallelism;

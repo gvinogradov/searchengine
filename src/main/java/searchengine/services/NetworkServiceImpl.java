@@ -24,6 +24,7 @@ public class NetworkServiceImpl implements NetworkService{
         try {
             response = Jsoup.connect(url)
                     .userAgent(parserCfg.getUserAgent())
+                    .ignoreContentType(true)
                     .referrer(parserCfg.getReferer())
                     .timeout(parserCfg.getTimeout())
                     .execute();
