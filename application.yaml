@@ -12,7 +12,7 @@ spring:
         dialect: org.hibernate.dialect.MySQL8Dialect
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
 
 indexing-settings:
   sites:
@@ -37,5 +37,5 @@ parsing-settings:
   contentType: text/html; charset=utf-8
   timeout: 15_000 # ms
   thread-delay: 150 # ms
-  treshhold: 10
+  lemmasTreshhold: 5000
   parallelism: 4

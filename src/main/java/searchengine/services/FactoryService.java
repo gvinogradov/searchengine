@@ -11,4 +11,5 @@ public class FactoryService {
     private final NetworkService networkService;
     private final PageService pageService;
     private final SiteService siteService;
+    private final LemmaService lemmaService;
 }

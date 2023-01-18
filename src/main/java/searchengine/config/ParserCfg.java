@@ -14,7 +14,7 @@ public class ParserCfg {
     private String referer;
     private String contentType;
     private int timeout;
-    private int treshhold;
+    private int lemmasTreshhold;
     private int parallelism;
     private int threadDelay;
 }

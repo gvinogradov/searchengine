@@ -40,6 +40,7 @@ public class IndexingServiceImpl implements IndexingService {
         Parser.setIsCanceled(false);
 
         Thread thread = new Thread(() -> {
+            factoryService.getLemmaService().deleteAll();
             factoryService.getPageService().deleteAll();
             factoryService.getSiteService().deleteAll();
 

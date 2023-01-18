@@ -22,7 +22,6 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 
-    private final Random random = new Random();
     private final FactoryService factoryService;
 
     private Long localDataTimeToMills(LocalDateTime dateTime) {
@@ -35,9 +34,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         item.setName(site.getName());
         item.setUrl(site.getUrl());
         item.setPages(factoryService.getPageService().getPagesCount(site.getId()));
-//            todo: сделать получение количества лемм из сервиса
-        item.setLemmas(random.nextInt(10_000)); // lemmasService.getLemmasCount();
-
+        item.setLemmas(factoryService.getLemmaService().getLemmasCount(site.getId()));
         item.setStatusTime(localDataTimeToMills(site.getStatusTime()));
         item.setStatus(site.getStatus().toString());
         item.setError(site.getLastError());
