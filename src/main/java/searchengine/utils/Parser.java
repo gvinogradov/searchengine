@@ -7,10 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
 import searchengine.config.ParserCfg;
-import searchengine.model.Lemma;
-import searchengine.model.Page;
-import searchengine.model.Site;
-import searchengine.model.Status;
+import searchengine.model.*;
 import searchengine.services.FactoryService;
 
 import java.io.IOException;
@@ -137,10 +134,18 @@ public class Parser extends RecursiveTask<Boolean> {
             factoryService.getSiteService().updateSiteStatus(site, Status.INDEXING, "");
             log.info(url + " - " + parsedUrls.size());
 
-            Set<String> lemmaSet = lemmaFinder.getLemmaSet(page.getContent());
-            calculateLemmas(lemmaSet);
-            if (getLemmasSum() > Parser.parserCfg.getLemmasTreshhold()) {
-                addLemmas();
+            Map<String, Integer> lemmaMap = lemmaFinder.collectLemmas(page.getContent());
+            calculateLemmas(lemmaMap.keySet());
+            addLemmas();
+
+            for (Map.Entry<String, Integer> entry: lemmaMap.entrySet()) {
+                Lemma lemma = factoryService.getLemmaService().get(site.getId(), entry.getKey());
+                int rank = entry.getValue();
+                Index index = new Index();
+                index.setRank(rank);
+                index.setPage(page);
+                index.setLemma(lemma);
+                factoryService.getIndexService().save(index);
             }
 
             for (String child : getUrls(response.parse())) {

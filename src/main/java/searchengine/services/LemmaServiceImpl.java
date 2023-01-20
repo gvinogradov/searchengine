@@ -18,6 +18,11 @@ public class LemmaServiceImpl implements LemmaService{
     }
 
     @Override
+    public Lemma get(int siteId, String lemma) {
+        return lemmaRepository.get(siteId, lemma);
+    }
+
+    @Override
     public void mergeFrequency(Map<Lemma, Integer> lemmaFrequency) {
         for(Map.Entry<Lemma, Integer> entry : lemmaFrequency.entrySet()) {
             String lemma = entry.getKey().getLemma();

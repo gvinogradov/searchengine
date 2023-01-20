@@ -17,6 +17,9 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
     @Query(value ="INSERT INTO lemmas (site_id, lemma, frequency) VALUES (?1, ?2, ?3) ON DUPLICATE KEY UPDATE `frequency`=`frequency` + ?3", nativeQuery = true)
     void merge(int siteId, String lemma, int frequency);
 
+    @Query(value ="SELECT * FROM lemmas WHERE site_id = :siteId AND lemma LIKE :lemma", nativeQuery = true)
+    Lemma get(int siteId, String lemma);
+
     @Query(value ="SELECT COUNT(*) FROM lemmas WHERE site_id = :siteId", nativeQuery = true)
     Integer getLemmasCount(int siteId);
 }

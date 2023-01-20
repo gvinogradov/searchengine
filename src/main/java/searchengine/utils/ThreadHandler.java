@@ -36,8 +36,6 @@ public class ThreadHandler implements Runnable {
             LemmaFinder lemmaFinder = LemmaFinder.getInstance();
             Parser parser = new Parser(site, site.getUrl() + "/", factoryService, lemmaFinder, parserCfg);
             if (forkJoinPool.invoke(parser)) {
-                factoryService.getLemmaService().mergeFrequency(parser.getLemmaFrequency());    // save < treshhold lemmas
-                
                 factoryService.getSiteService().updateSiteStatus(site, Status.INDEXED, "");
                 log.info(site.getUrl() + " - " + String.valueOf(System.currentTimeMillis() - start));
             } else {

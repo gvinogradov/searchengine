@@ -35,6 +35,9 @@ public class LemmaFinder {
         HashMap<String, Integer> lemmas = new HashMap<>();
 
         for (String word : words) {
+
+
+
             if (word.isBlank()) {
                 continue;
             }
@@ -47,6 +50,10 @@ public class LemmaFinder {
             List<String> normalForms = luceneMorphology.getNormalForms(word);
             if (normalForms.isEmpty()) {
                 continue;
+            }
+
+            if (word.length() <= 2) {
+                System.out.println();
             }
 
             String normalWord = normalForms.get(0);
@@ -70,6 +77,8 @@ public class LemmaFinder {
                 if (anyWordBaseBelongToParticle(wordBaseForms)) {
                     continue;
                 }
+
+
                 lemmaSet.addAll(luceneMorphology.getNormalForms(word));
             }
         }
