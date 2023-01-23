@@ -35,9 +35,6 @@ public class LemmaFinder {
         HashMap<String, Integer> lemmas = new HashMap<>();
 
         for (String word : words) {
-
-
-
             if (word.isBlank()) {
                 continue;
             }
@@ -52,12 +49,7 @@ public class LemmaFinder {
                 continue;
             }
 
-            if (word.length() <= 2) {
-                System.out.println();
-            }
-
             String normalWord = normalForms.get(0);
-
             if (lemmas.containsKey(normalWord)) {
                 lemmas.put(normalWord, lemmas.get(normalWord) + 1);
             } else {

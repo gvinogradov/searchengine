@@ -7,6 +7,9 @@ import searchengine.config.ParserCfg;
 import searchengine.model.Site;
 import searchengine.model.Status;
 import searchengine.services.FactoryService;
+import searchengine.services.IndexingService;
+import searchengine.services.NetworkService;
+import searchengine.services.SiteService;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;
@@ -15,15 +18,23 @@ import java.util.concurrent.ForkJoinTask;
 @Slf4j
 public class ThreadHandler implements Runnable {
 
-    private static ParserCfg parserCfg;
-    private static FactoryService factoryService;
     private static ForkJoinPool forkJoinPool;
+    private ParserCfg parserCfg;
+    private NetworkService networkService;
+    private SiteService siteService;
+    private IndexingService indexingService;
     private Site site;
+    private String startUrl;
 
-    public ThreadHandler(ParserCfg parserCfg, FactoryService factoryService, Site site) {
-        ThreadHandler.parserCfg = parserCfg;
-        ThreadHandler.factoryService = factoryService;
+    public ThreadHandler(ParserCfg parserCfg, NetworkService networkService,
+                         SiteService siteService, IndexingService indexingService,
+                         Site site, String startUrl) {
+        this.parserCfg = parserCfg;
+        this.indexingService = indexingService;
+        this.networkService = networkService;
+        this.siteService = siteService;
         this.site = site;
+        this.startUrl = startUrl;
         if (forkJoinPool == null) {
             forkJoinPool = new ForkJoinPool(parserCfg.getParallelism());
         }
@@ -32,14 +43,11 @@ public class ThreadHandler implements Runnable {
     @Override
     public void run() {
         try {
-            Long start = System.currentTimeMillis();
-            LemmaFinder lemmaFinder = LemmaFinder.getInstance();
-            Parser parser = new Parser(site, site.getUrl() + "/", factoryService, lemmaFinder, parserCfg);
+            Parser parser = new Parser(site, startUrl, networkService, indexingService, parserCfg);
             if (forkJoinPool.invoke(parser)) {
-                factoryService.getSiteService().updateSiteStatus(site, Status.INDEXED, "");
-                log.info(site.getUrl() + " - " + String.valueOf(System.currentTimeMillis() - start));
+                siteService.updateSiteStatus(site, Status.INDEXED, "");
             } else {
-                factoryService.getSiteService().updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
+                siteService.updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
             }
         } catch (Exception e) {
             log.info("Старт индексации ошибка " + e.getMessage());

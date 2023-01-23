@@ -38,4 +38,4 @@ parsing-settings:
   timeout: 15_000 # ms
   thread-delay: 150 # ms
   Treshhold: 500
-  parallelism: 4
+  parallelism: 10

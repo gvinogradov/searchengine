@@ -1,10 +1,14 @@
 package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
+import org.jsoup.Connection;
+import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
 import searchengine.model.Page;
+import searchengine.model.Site;
 import searchengine.repository.PageRepository;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
 
@@ -16,8 +20,8 @@ public class PageServiceImpl implements PageService, Serializable {
     private final PageRepository pageRepository;
 
     @Override
-    public void save(Page page) {
-        pageRepository.saveAndFlush(page);
+    public Page save(Page page) {
+        return pageRepository.saveAndFlush(page);
     }
 
     @Override
@@ -27,15 +31,27 @@ public class PageServiceImpl implements PageService, Serializable {
 
     @Override
     public boolean existPagePath(int siteId, String path) {
-        List<Page> pageList = pageRepository.getPagesByPath(siteId, path);
-        if (pageList.size() > 0) {
-            return true;
-        }
-        return false;
+        return pageRepository.getPagesByPath(siteId, path) != null;
     }
 
     @Override
     public int getPagesCount(int siteId) {
         return pageRepository.getPagesCount(siteId);
+    }
+
+    @Override
+    public Page addPage(Site site, Connection.Response response) throws IOException {
+        Document document = response.parse();
+        String url = response.url().toString();
+        String path = url.substring(site.getUrl().length());
+        Page page = pageRepository.getPagesByPath(site.getId(), path);
+        if (page == null) {
+            page = new Page();
+            page.setPath(path);
+            page.setSite(site);
+        }
+        page.setCode(response.statusCode());
+        page.setContent(document.toString());
+        return save(page);
     }
 }

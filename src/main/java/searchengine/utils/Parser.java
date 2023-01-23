@@ -8,12 +8,10 @@ import org.jsoup.select.Elements;
 import org.springframework.http.HttpStatus;
 import searchengine.config.ParserCfg;
 import searchengine.model.*;
-import searchengine.services.FactoryService;
+import searchengine.services.IndexingService;
+import searchengine.services.NetworkService;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,26 +24,24 @@ public class Parser extends RecursiveTask<Boolean> {
     private String url;
     private Set<String> parsedUrls;
     @Getter
-    private Map<Lemma, Integer> lemmaFrequency;
     private static ParserCfg parserCfg;
-    private static FactoryService factoryService;
+    private static NetworkService networkService;
+    private static IndexingService indexingService;
     private static AtomicBoolean isCanceled = new AtomicBoolean();
-    private static LemmaFinder lemmaFinder;
     private final static boolean PARSE_SUCCESS = true;
     private final static boolean PARSE_FAIL = false;
 
-    public Parser(Site site, String url, Set<String> parsedUrls, Map<Lemma, Integer> lemmaFrequency) {
+    public Parser(Site site, String url, Set<String> parsedUrls) {
         this.site = site;
         this.url = url;
         this.parsedUrls = parsedUrls;
-        this.lemmaFrequency = lemmaFrequency;
     }
 
-    public Parser(Site site, String url, FactoryService factoryService, LemmaFinder lemmaFinder, ParserCfg parserCfg) {
-        this(site, url, new HashSet<>(), new ConcurrentHashMap<>());
+    public Parser(Site site, String url, NetworkService networkService, IndexingService indexingService, ParserCfg parserCfg) {
+        this(site, url, new HashSet<>());
         Parser.parserCfg = parserCfg;
-        Parser.factoryService = factoryService;
-        Parser.lemmaFinder = lemmaFinder;
+        Parser.networkService = networkService;
+        Parser.indexingService = indexingService;
     }
 
     public static void setIsCanceled(boolean isCanceled) {
@@ -74,40 +70,6 @@ public class Parser extends RecursiveTask<Boolean> {
         }
     }
 
-    private Page addPage(Connection.Response response) throws IOException {
-        Document document = response.parse();
-        String path = url.substring(site.getUrl().length());
-        Page page = new Page();
-        page.setSite(site);
-        page.setCode(response.statusCode());
-        page.setPath(path);
-        page.setContent(document.toString());
-        factoryService.getPageService().save(page);
-        return page;
-    }
-
-    private void addLemmas() {
-        synchronized (lemmaFrequency) {
-            factoryService.getLemmaService().mergeFrequency(lemmaFrequency);
-            lemmaFrequency.clear();
-        }
-    }
-
-    private void calculateLemmas(Set<String> lemmaSet) {
-        for (String lemmaName : lemmaSet) {
-            Lemma lemma = new Lemma();
-            lemma.setLemma(lemmaName);
-            lemma.setSite(site);
-            if (lemmaFrequency.putIfAbsent(lemma,1) != null) {
-                lemmaFrequency.compute(lemma, (key, value) -> value + 1);
-            }
-        }
-    }
-
-    private int getLemmasSum(){
-        return lemmaFrequency.values().stream().mapToInt(Integer::intValue).sum();
-    }
-
     @Override
     protected Boolean compute() {
         if (Parser.isCanceled.get())
@@ -122,36 +84,19 @@ public class Parser extends RecursiveTask<Boolean> {
         boolean parseSubTasks = PARSE_SUCCESS;
         List<Parser> tasks = new ArrayList<>();
         try {
-            Connection.Response response = factoryService.getNetworkService().getResponse(url);
-            if ((response == null)
-                    || (response.statusCode() != HttpStatus.OK.value())
-                    || (!response.contentType().equalsIgnoreCase(parserCfg.getContentType())))
+            Connection.Response response = networkService.getResponse(url);
+            if (!networkService.isAvailableContent(response))
             {
                 return PARSE_SUCCESS;
             }
 
-            Page page = addPage(response);
-            factoryService.getSiteService().updateSiteStatus(site, Status.INDEXING, "");
+            Parser.indexingService.parsePage(site, response);
             log.info(url + " - " + parsedUrls.size());
-
-            Map<String, Integer> lemmaMap = lemmaFinder.collectLemmas(page.getContent());
-            calculateLemmas(lemmaMap.keySet());
-            addLemmas();
-
-            for (Map.Entry<String, Integer> entry: lemmaMap.entrySet()) {
-                Lemma lemma = factoryService.getLemmaService().get(site.getId(), entry.getKey());
-                int rank = entry.getValue();
-                Index index = new Index();
-                index.setRank(rank);
-                index.setPage(page);
-                index.setLemma(lemma);
-                factoryService.getIndexService().save(index);
-            }
 
             for (String child : getUrls(response.parse())) {
                 if (isSubURL(site.getUrl(), child) &&
                         !parsedUrls.contains(child)) {
-                    Parser newTask = new Parser(site, child, parsedUrls, lemmaFrequency);
+                    Parser newTask = new Parser(site, child, parsedUrls);
                     tasks.add(newTask);
                 }
             }

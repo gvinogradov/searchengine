@@ -40,4 +40,11 @@ public class NetworkServiceImpl implements NetworkService{
         return response == null ?
                 false : response.statusCode() == HttpStatus.OK.value();
     }
+
+    @Override
+    public boolean isAvailableContent(Connection.Response response) {
+        return ((response != null)
+                && (response.statusCode() == HttpStatus.OK.value())
+                && (response.contentType().equalsIgnoreCase(parserCfg.getContentType())));
+    }
 }

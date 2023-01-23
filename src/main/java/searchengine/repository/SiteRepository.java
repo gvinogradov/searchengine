@@ -12,7 +12,7 @@ import searchengine.model.Status;
 @Repository
 public interface SiteRepository extends JpaRepository<Site, Integer> {
 
-    @Query(value = "SELECT * from sites where url LIKE %:url%", nativeQuery = true)
+    @Query(value = "SELECT * from sites where url LIKE %:url% LIMIT 1", nativeQuery = true)
     Site getByUrl(String url);
 
     @Query(value = "SELECT id from sites where url LIKE %:url% LIMIT 1", nativeQuery = true)
