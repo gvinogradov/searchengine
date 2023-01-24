@@ -47,4 +47,14 @@ public class IndexServiceImpl implements IndexService {
         }
         return indexes;
     }
+
+    @Override
+    public List<Integer> getLemmaIdListByPageId(int pageId) {
+        return indexRepository.getLemmaIdListByPageId(pageId);
+    }
+
+    @Override
+    public void deleteByPageId(int pageId) {
+        indexRepository.deleteByPageId(pageId);
+    }
 }

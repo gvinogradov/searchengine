@@ -58,6 +58,11 @@ public class LemmaServiceImpl implements LemmaService{
     }
 
     @Override
+    public void decreaseFrequencyByLemmaId(int lemmaId) {
+        lemmaRepository.decreaseFrequencyByLemmaId(lemmaId);
+    }
+
+    @Override
     public Integer getLemmasCount(int siteId) {
         Integer count = lemmaRepository.getLemmasCount(siteId);
         return count == null ? 0 : count;

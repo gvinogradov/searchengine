@@ -13,5 +13,6 @@ public interface LemmaService {
     List<Lemma> createLemmas(Set<String> lemmaSet, Site site);
     void mergeFrequency(Map<Lemma, Integer> lemmaFrequency);
     void mergeFrequency(List<Lemma> lemmas);
+    void decreaseFrequencyByLemmaId(int lemmaId);
     Integer getLemmasCount(int siteId);
 }

@@ -13,7 +13,7 @@ public interface SiteService {
     Site save(Site site);
     void saveAll(List<Site> sites);
     Site getByUrl(String url);
-    Site createSite(SiteCfg siteCfg);
+    Site createSite(SiteCfg siteCfg, Status status, String lastError);
     List<Site> getSitesToParsing(SitesList sites);
     Site addSiteToParsing(Site site);
     List<Site> getAll();

@@ -34,34 +34,32 @@ public class SiteServiceImpl implements SiteService {
         return siteRepository.getByUrl(url);
     }
 
+//    todo: убрать проверку и передавать статус
     @Override
-    public Site createSite(SiteCfg siteCfg) {
-        Site site = null;
-        boolean isAvailable = networkService
-                .checkSiteConnection(siteCfg.getUrl());
-        String lastError = isAvailable ? "" : "Сайт не доступен";
-        Status status = isAvailable ? Status.INDEXING : Status.FAILED;
-//        site = getByUrl(siteCfg.getUrl());
-//        if (site == null) {
-        site = new Site();
+    public Site createSite(SiteCfg siteCfg, Status status, String lastError) {
+//        Site site = null;
+//        boolean isAvailable = networkService.checkSiteConnection(siteCfg.getUrl());
+//        String lastError = isAvailable ? "" : "Сайт не доступен";
+//        Status status = isAvailable ? Status.INDEXING : Status.FAILED;
+        Site site = new Site();
         site.setUrl(siteCfg.getUrl());
         site.setName(siteCfg.getName());
-//        }
         site.setStatus(status);
         site.setStatusTime(LocalDateTime.now());
         site.setLastError(lastError);
         return site;
     }
 
+//    todo: перенести статус
     @Override
     public List<Site> getSitesToParsing(SitesList sites) {
         List<Site> sitesToParsing = new ArrayList<>();
         for (SiteCfg siteCfg : sites.getSites()) {
-            Site site = createSite(siteCfg);
-//            save(site);
-//            if (site.getLastError().isBlank()) {
+            boolean isAvailable = networkService.checkSiteConnection(siteCfg.getUrl());
+            String lastError = isAvailable ? "" : "Сайт не доступен";
+            Status status = isAvailable ? Status.INDEXING : Status.FAILED;
+            Site site = createSite(siteCfg, status, lastError);
             sitesToParsing.add(site);
-//            }
         }
         return sitesToParsing;
     }
