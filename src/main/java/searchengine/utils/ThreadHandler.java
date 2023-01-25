@@ -44,8 +44,10 @@ public class ThreadHandler implements Runnable {
     public void run() {
         try {
             Parser parser = new Parser(site, startUrl, networkService, indexingService, parserCfg);
+            Long start = System.currentTimeMillis();
             if (forkJoinPool.invoke(parser)) {
                 siteService.updateSiteStatus(site, Status.INDEXED, "");
+                System.out.println(site.getUrl() + " - " + (System.currentTimeMillis() - start));
             } else {
                 siteService.updateSiteStatus(site, Status.FAILED, "Индексация остановлена пользователем");
             }

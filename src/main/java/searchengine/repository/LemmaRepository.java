@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 import searchengine.model.Lemma;
 import searchengine.model.Status;
 
+import java.util.List;
+import java.util.Set;
+
 @Repository
 public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
 
@@ -31,8 +34,23 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
             "WHERE site_id = :siteId AND lemma LIKE :lemma", nativeQuery = true)
     Lemma get(int siteId, String lemma);
 
+    @Query(value ="SELECT * " +
+            "FROM lemmas " +
+            "WHERE frequency < :maxFrequency " +
+            "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
+    List<Lemma> getLemmasByArray(Set<String> lemmasInQuery, int maxFrequency);
+
+    @Query(value ="SELECT * " +
+            "FROM lemmas " +
+            "WHERE site_id = :siteId " +
+            "AND frequency < :maxFrequency " +
+            "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
+    List<Lemma> getLemmasByArrayAndSite(Set<String> lemmasInQuery, int maxFrequency, int siteId);
+
     @Query(value ="SELECT COUNT(*) " +
             "FROM lemmas " +
             "WHERE site_id = :siteId", nativeQuery = true)
     Integer getLemmasCount(int siteId);
+
+
 }

@@ -10,7 +10,7 @@ import java.util.Objects;
 @Data
 @Entity
 @Table(name = "lemmas")
-public class Lemma{
+public class Lemma implements Comparable<Lemma>{
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
@@ -42,5 +42,11 @@ public class Lemma{
     @Override
     public int hashCode() {
         return Objects.hash(site.getId(), lemma);
+    }
+
+
+    @Override
+    public int compareTo(Lemma o) {
+        return Integer.compare(this.frequency, o.getFrequency());
     }
 }

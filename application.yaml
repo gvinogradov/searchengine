@@ -20,14 +20,14 @@ indexing-settings:
 #      name: Лента.ру
 #    - url: https://skillbox.ru
 #      name: Skillbox
-    - url: https://playback.ru
-      name: PlayBack.Ru
-#    - url: https://dombulgakova.ru
-#      name: Булгаковский дом
+#    - url: https://playback.ru
+#      name: PlayBack.Ru
+    - url: https://dombulgakova.ru
+      name: Булгаковский дом
     - url: http://cimus.biz
       name: DOM
-    - url: https://exotic-zoo.ru
-      name: DOMIK
+#    - url: https://exotic-zoo.ru
+#      name: DOMIK
     - url: https://lalabla.ru
       name: Не существующий
 
@@ -37,5 +37,9 @@ parsing-settings:
   contentType: text/html; charset=utf-8
   timeout: 15_000 # ms
   thread-delay: 150 # ms
-  Treshhold: 500
   parallelism: 10
+
+search-settings:
+  limit: 20
+  offset: 0
+  treshhold: 100
