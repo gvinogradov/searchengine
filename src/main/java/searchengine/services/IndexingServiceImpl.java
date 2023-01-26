@@ -7,18 +7,13 @@ import searchengine.config.ParserCfg;
 import searchengine.config.SiteCfg;
 import searchengine.config.SitesList;
 import searchengine.dto.indexing.IndexingResponse;
-import searchengine.exception.ResourceNotFoundException;
 import searchengine.model.*;
-import searchengine.utils.LemmaFinder;
 import searchengine.utils.Parser;
 import searchengine.utils.ThreadHandler;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.*;
 
 @Slf4j
 @Service
@@ -31,11 +26,12 @@ public class IndexingServiceImpl implements IndexingService {
     private final PageService pageService;
     private final LemmaService lemmaService;
     private final IndexService indexService;
+    private final MorphologyService morphologyService;
 
     public IndexingServiceImpl(SitesList sites, ParserCfg parserCfg,
                                NetworkService networkService, SiteService siteService,
                                PageService pageService, LemmaService lemmaService,
-                               IndexService indexService) {
+                               IndexService indexService, MorphologyService morphologyService) {
         this.sites = sites;
         this.parserCfg = parserCfg;
         this.networkService = networkService;
@@ -43,6 +39,7 @@ public class IndexingServiceImpl implements IndexingService {
         this.pageService = pageService;
         this.lemmaService = lemmaService;
         this.indexService = indexService;
+        this.morphologyService = morphologyService;
         siteService.dropIndexingStatus();
     }
 
@@ -127,10 +124,7 @@ public class IndexingServiceImpl implements IndexingService {
     public void parsePage(Site site, Connection.Response response) throws Exception {
         Page page = pageService.addPage(site, response);
 
-//        todo: LemmaFinder refactoring + singleton?
-        LemmaFinder lemmaFinder = LemmaFinder.getInstance();
-        Map<String, Integer> lemmaMap = lemmaFinder.collectLemmas(page.getContent());
-
+        Map<String, Integer> lemmaMap = morphologyService.collectLemmas(page.getContent());
         List<Integer> lemmaIdList = indexService.getLemmaIdListByPageId(page.getId());
         if (lemmaIdList.size() > 0) {
             indexService.deleteByPageId(page.getId());

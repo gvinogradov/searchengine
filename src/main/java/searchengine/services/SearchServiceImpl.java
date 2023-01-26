@@ -11,11 +11,8 @@ import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
 import searchengine.model.Site;
 import searchengine.repository.LemmaRepository;
-import searchengine.utils.LemmaFinder;
 
-import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -24,6 +21,8 @@ public class SearchServiceImpl implements SearchService {
     private final SearchCfg defaultSearchCfg;
     private final LemmaRepository lemmaRepository;
     private final SiteService siteService;
+    private final MorphologyService morphologyService;
+    private final PageService pageService;
 
     @Override
     public ResponseEntity<?> search(SearchCfg searchCfg) {
@@ -36,16 +35,13 @@ public class SearchServiceImpl implements SearchService {
             searchCfg.setLimit(defaultSearchCfg.getLimit());
         }
         try {
-            LemmaFinder lemmaFinder = LemmaFinder.getInstance();
-            Set<String> lemmaSet = lemmaFinder.getLemmaSet(searchCfg.getQuery());
+            Set<String> lemmaSet = morphologyService.getLemmaSet(searchCfg.getQuery());
 
             Site site = (searchCfg.getSite() != null) ?
                     siteService.getByUrl(searchCfg.getSite()) : null;
             List<Lemma> lemmas = (site == null) ?
                     lemmaRepository.getLemmasByArray(lemmaSet, searchCfg.getTreshhold()) :
                     lemmaRepository.getLemmasByArrayAndSite(lemmaSet, searchCfg.getTreshhold(), site.getId());
-
-            lemmas.sort(Lemma::compareTo);
 
             lemmas.forEach(System.out::println);
         } catch (Exception e) {

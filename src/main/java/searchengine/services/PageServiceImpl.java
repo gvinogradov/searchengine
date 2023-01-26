@@ -25,6 +25,11 @@ public class PageServiceImpl implements PageService, Serializable {
     }
 
     @Override
+    public Page get(int pageId) {
+        return pageRepository.findById(pageId).get();
+    }
+
+    @Override
     public void deleteAll() {
         pageRepository.deleteAll();
     }

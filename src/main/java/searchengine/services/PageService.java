@@ -10,6 +10,7 @@ import java.io.IOException;
 public interface PageService {
 
     Page save(Page page);
+    Page get(int pageId);
     void deleteAll();
     boolean existPagePath(int siteId, String path);
     int getPagesCount(int siteId);
