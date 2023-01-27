@@ -3,11 +3,9 @@ package searchengine.repository;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.model.Lemma;
-import searchengine.model.Status;
 
 import java.util.List;
 import java.util.Set;
@@ -36,16 +34,14 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
 
     @Query(value ="SELECT * " +
             "FROM lemmas " +
-            "WHERE frequency < :maxFrequency " +
-            "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
-    List<Lemma> getLemmasByArray(Set<String> lemmasInQuery, int maxFrequency);
+            "WHERE lemma IN (:lemmasInQuery)", nativeQuery = true)
+    List<Lemma> getSortedFoundList(Set<String> lemmasInQuery);
 
     @Query(value ="SELECT * " +
             "FROM lemmas " +
             "WHERE site_id = :siteId " +
-            "AND frequency < :maxFrequency " +
             "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
-    List<Lemma> getLemmasByArrayAndSite(Set<String> lemmasInQuery, int maxFrequency, int siteId);
+    List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int siteId);
 
     @Query(value ="SELECT COUNT(*) " +
             "FROM lemmas " +

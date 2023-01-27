@@ -31,21 +31,6 @@ public class Lemma implements Comparable<Lemma>{
 
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Lemma lemma1 = (Lemma) o;
-        return site.getId() == lemma1.site.getId()
-                && lemma.equals(lemma1.lemma);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(site.getId(), lemma);
-    }
-
-
-    @Override
     public int compareTo(Lemma o) {
         return Integer.compare(this.frequency, o.getFrequency());
     }

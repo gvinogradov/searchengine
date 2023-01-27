@@ -1,19 +1,14 @@
 package searchengine.utils;
 
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import searchengine.config.ParserCfg;
 import searchengine.model.Site;
 import searchengine.model.Status;
-import searchengine.services.FactoryService;
 import searchengine.services.IndexingService;
 import searchengine.services.NetworkService;
 import searchengine.services.SiteService;
 
-import java.util.concurrent.Callable;
 import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.ForkJoinTask;
 
 @Slf4j
 public class ThreadHandler implements Runnable {

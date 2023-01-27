@@ -6,10 +6,8 @@ import searchengine.model.Lemma;
 import searchengine.model.Site;
 import searchengine.repository.LemmaRepository;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +34,13 @@ public class LemmaServiceImpl implements LemmaService{
             lemmas.add(lemma);
         }
         return lemmas;
+    }
+
+    @Override
+    public Lemma createBlankLemma(String lemma) {
+        Lemma lemmaEntity = new Lemma();
+        lemmaEntity.setLemma(lemma);
+        return lemmaEntity;
     }
 
     @Override
@@ -66,5 +71,33 @@ public class LemmaServiceImpl implements LemmaService{
     public Integer getLemmasCount(int siteId) {
         Integer count = lemmaRepository.getLemmasCount(siteId);
         return count == null ? 0 : count;
+    }
+
+    @Override
+    public List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int maxFrequency) {
+        List<Lemma> foundLemmas = lemmaRepository.getSortedFoundList(lemmasInQuery);
+        return filteredLemmasList(lemmasInQuery, foundLemmas, maxFrequency);
+    }
+
+    @Override
+    public List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int maxFrequency, int siteId) {
+        List<Lemma> foundLemmas = lemmaRepository.getSortedFoundList(lemmasInQuery, siteId);
+        return filteredLemmasList(lemmasInQuery, foundLemmas, maxFrequency);
+    }
+
+    @Override
+    public List<Lemma> filteredLemmasList(Set<String> lemmasInQuery, List<Lemma> foundLemmas, int maxFrequency) {
+        for (String lemma: lemmasInQuery) {
+            if (foundLemmas.stream()
+                    .anyMatch(l -> l.getLemma().equals(lemma))) {
+                foundLemmas.add(createBlankLemma(lemma));
+            }
+        }
+        List<Lemma> filteredLemmas = foundLemmas.stream()
+                .filter(l -> l.getFrequency() <= maxFrequency)
+                .sorted()
+                .toList();
+
+        return filteredLemmas;
     }
 }

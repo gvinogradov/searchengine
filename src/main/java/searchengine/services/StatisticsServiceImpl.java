@@ -22,7 +22,9 @@ import java.util.Random;
 @RequiredArgsConstructor
 public class StatisticsServiceImpl implements StatisticsService {
 
-    private final FactoryService factoryService;
+    private final SiteService siteService;
+    private final PageService pageService;
+    private final LemmaService lemmaService;
 
     private Long localDataTimeToMills(LocalDateTime dateTime) {
         ZonedDateTime zonedDateTime = ZonedDateTime.of(dateTime, ZoneId.systemDefault());
@@ -33,8 +35,8 @@ public class StatisticsServiceImpl implements StatisticsService {
         DetailedStatisticsItem item = new DetailedStatisticsItem();
         item.setName(site.getName());
         item.setUrl(site.getUrl());
-        item.setPages(factoryService.getPageService().getPagesCount(site.getId()));
-        item.setLemmas(factoryService.getLemmaService().getLemmasCount(site.getId()));
+        item.setPages(pageService.getPagesCount(site.getId()));
+        item.setLemmas(lemmaService.getLemmasCount(site.getId()));
         item.setStatusTime(localDataTimeToMills(site.getStatusTime()));
         item.setStatus(site.getStatus().toString());
         item.setError(site.getLastError());
@@ -43,7 +45,7 @@ public class StatisticsServiceImpl implements StatisticsService {
 
     @Override
     public StatisticsResponse getStatistics() {
-        List<Site> sites = factoryService.getSiteService().getAll();
+        List<Site> sites = siteService.getAll();
         TotalStatistics total = new TotalStatistics();
         total.setSites(sites.size());
 
@@ -55,7 +57,7 @@ public class StatisticsServiceImpl implements StatisticsService {
             detailed.add(item);
         }
 
-        total.setIndexing(factoryService.getSiteService().isIndexing());
+        total.setIndexing(siteService.isIndexing());
         StatisticsData statisticsData = new StatisticsData();
         statisticsData.setTotal(total);
         statisticsData.setDetailed(detailed);
