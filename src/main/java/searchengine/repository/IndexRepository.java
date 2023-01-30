@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.model.Index;
-import searchengine.model.Lemma;
+import searchengine.model.Page;
 
 import java.util.List;
 
@@ -18,6 +18,12 @@ public interface IndexRepository extends JpaRepository<Index, Integer> {
             "where page_id = :pageId " +
             "group by lemma_id", nativeQuery = true)
     List<Integer> getLemmaIdListByPageId(int pageId);
+
+    @Query(value ="SELECT COUNT(*) " +
+            "FROM indexes " +
+            "where page_id = :pageId " +
+            "AND lemma_id = :lemmaId", nativeQuery = true)
+    Integer getIndexCount(int pageId, int lemmaId);
 
     @Transactional
     @Modifying(clearAutomatically = true)

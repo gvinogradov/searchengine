@@ -20,10 +20,10 @@ indexing-settings:
 #      name: Лента.ру
 #    - url: https://skillbox.ru
 #      name: Skillbox
-#    - url: https://playback.ru
-#      name: PlayBack.Ru
-    - url: https://dombulgakova.ru
-      name: Булгаковский дом
+    - url: https://playback.ru
+      name: PlayBack.Ru
+#    - url: https://dombulgakova.ru
+#      name: Булгаковский дом
     - url: http://cimus.biz
       name: DOM
 #    - url: https://exotic-zoo.ru

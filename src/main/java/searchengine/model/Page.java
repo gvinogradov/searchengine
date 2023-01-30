@@ -40,4 +40,5 @@ public class Page {
 
 //    @OneToMany(mappedBy = "page")
 //    private List<Index> indexes;
+
 }

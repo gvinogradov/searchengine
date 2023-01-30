@@ -33,7 +33,8 @@ public class MorphologyServiceImpl implements MorphologyService {
 
     private boolean hasParticleProperty(String wordBase) {
         for (String property : PARTICLES_NAMES) {
-            if (wordBase.toUpperCase().contains(property)) {
+            String baseProperty = wordBase.split("\\s+", 2)[1];
+            if (baseProperty.toUpperCase().contains(property)) {
                 return true;
             }
         }
@@ -50,25 +51,17 @@ public class MorphologyServiceImpl implements MorphologyService {
 
     @Override
     public Set<String> getLemmaSet(String html) {
-        String[] text = arrayContainsRussianWords(html);
-        Set<String> lemmaSet = new HashSet<>();
-        for (String word : text) {
-            List<String> wordBaseForms = morphologyForms(word);
-            if (wordBaseForms.isEmpty() || anyWordBaseBelongToParticle(wordBaseForms)) {
-                continue;
-            }
-            lemmaSet.addAll(luceneMorphology.getNormalForms(word));
-        }
-        return lemmaSet;
+        return collectLemmas(html).keySet();
     }
 
     @Override
     public Map<String, Integer> collectLemmas(String html) {
-        String[] words = arrayContainsRussianWords(html);
+        String[] text = arrayContainsRussianWords(html);
         HashMap<String, Integer> lemmas = new HashMap<>();
-        for (String word : words) {
+        for (String word : text) {
             List<String> wordBaseForms = morphologyForms(word);
-            if (wordBaseForms.isEmpty() || anyWordBaseBelongToParticle(wordBaseForms)) {
+            if (wordBaseForms.isEmpty()
+                    || anyWordBaseBelongToParticle(wordBaseForms)) {
                 continue;
             }
 

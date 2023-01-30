@@ -1,18 +1,22 @@
 package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import searchengine.config.SearchCfg;
 import searchengine.model.Lemma;
 import searchengine.model.Site;
 import searchengine.repository.LemmaRepository;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class LemmaServiceImpl implements LemmaService{
     private final LemmaRepository lemmaRepository;
+    private final SiteService siteService;
+    private final MorphologyService morphologyService;
 
     @Override
     public void deleteAll() {
@@ -25,6 +29,45 @@ public class LemmaServiceImpl implements LemmaService{
     }
 
     @Override
+    public List<Lemma> getSortedLemmas(SearchCfg searchCfg) {
+        List<Lemma> lemmas = new ArrayList<>();
+        try {
+            Set<String> queryLemmas = morphologyService.getLemmaSet(searchCfg.getQuery());
+            List<Site> sites = siteService.getSites(searchCfg);
+            for (Site site: sites) {
+                lemmas.addAll(getFoundLemmas(queryLemmas, site.getId()));
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Collections.emptyList();
+        }
+        return lemmas.stream()
+                .filter(l -> l.getFrequency() <= searchCfg.getTreshhold())
+                .sorted()
+                .toList();
+    }
+
+    @Override
+    public Map<String, Integer> collectLemmaFrequency(SearchCfg searchCfg) {
+        Map<String, Integer> lemmasFrequency = new HashMap<>();
+        try {
+            Set<String> queryLemmas = morphologyService.getLemmaSet(searchCfg.getQuery());
+            for (String lemma: queryLemmas) {
+                Integer frequency = lemmaRepository.getLemmaFrequency(lemma);
+                if (frequency != null) {
+                    lemmasFrequency.put(lemma, frequency);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            return Collections.emptyMap();
+        }
+
+        lemmasFrequency.values().removeIf(v -> v > searchCfg.getTreshhold());
+        return lemmasFrequency;
+    }
+
+    @Override
     public List<Lemma> createLemmas(Set<String> lemmaSet, Site site) {
         List<Lemma> lemmas = new ArrayList<>();
         for (String lemmaName : lemmaSet) {
@@ -34,23 +77,6 @@ public class LemmaServiceImpl implements LemmaService{
             lemmas.add(lemma);
         }
         return lemmas;
-    }
-
-    @Override
-    public Lemma createBlankLemma(String lemma) {
-        Lemma lemmaEntity = new Lemma();
-        lemmaEntity.setLemma(lemma);
-        return lemmaEntity;
-    }
-
-    @Override
-    public void mergeFrequency(Map<Lemma, Integer> lemmaFrequency) {
-        for(Map.Entry<Lemma, Integer> entry : lemmaFrequency.entrySet()) {
-            String lemma = entry.getKey().getLemma();
-            int frequency = entry.getValue();
-            int siteId = entry.getKey().getSite().getId();
-            lemmaRepository.merge(siteId, lemma, frequency);
-        }
     }
 
     @Override
@@ -74,30 +100,14 @@ public class LemmaServiceImpl implements LemmaService{
     }
 
     @Override
-    public List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int maxFrequency) {
-        List<Lemma> foundLemmas = lemmaRepository.getSortedFoundList(lemmasInQuery);
-        return filteredLemmasList(lemmasInQuery, foundLemmas, maxFrequency);
-    }
-
-    @Override
-    public List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int maxFrequency, int siteId) {
-        List<Lemma> foundLemmas = lemmaRepository.getSortedFoundList(lemmasInQuery, siteId);
-        return filteredLemmasList(lemmasInQuery, foundLemmas, maxFrequency);
-    }
-
-    @Override
-    public List<Lemma> filteredLemmasList(Set<String> lemmasInQuery, List<Lemma> foundLemmas, int maxFrequency) {
+    public List<Lemma> getFoundLemmas(Set<String> lemmasInQuery, int siteId) {
+        List<Lemma> foundLemmas = lemmaRepository.getLemmasFoundList(lemmasInQuery, siteId);
         for (String lemma: lemmasInQuery) {
-            if (foundLemmas.stream()
+            if (!foundLemmas.stream()
                     .anyMatch(l -> l.getLemma().equals(lemma))) {
-                foundLemmas.add(createBlankLemma(lemma));
+                return Collections.emptyList();
             }
         }
-        List<Lemma> filteredLemmas = foundLemmas.stream()
-                .filter(l -> l.getFrequency() <= maxFrequency)
-                .sorted()
-                .toList();
-
-        return filteredLemmas;
+        return foundLemmas;
     }
 }

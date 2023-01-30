@@ -10,10 +10,30 @@ import java.util.List;
 @Repository
 public interface PageRepository extends JpaRepository<Page, Integer> {
 
-    @Query(value = "SELECT * from pages where site_id = :siteId AND path LIKE :path LIMIT 1", nativeQuery = true)
+    @Query(value = "SELECT * " +
+            "FROM pages " +
+            "WHERE site_id = :siteId " +
+            "AND path LIKE :path LIMIT 1", nativeQuery = true)
     Page getPagesByPath(int siteId, String path);
 
-    @Query(value = "SELECT COUNT(*) from pages where site_id = :siteId", nativeQuery = true)
+    @Query(value = "SELECT COUNT(*) " +
+            "FROM pages " +
+            "WHERE site_id = :siteId", nativeQuery = true)
     Integer getPagesCount(int siteId);
+
+    @Query(value ="SELECT p.* " +
+            "FROM lemmas l " +
+            "LEFT JOIN indexes i ON l.id = i.lemma_id " +
+            "LEFT JOIN pages p ON p.id = i.page_id " +
+            "WHERE l.lemma LIKE :lemma", nativeQuery = true)
+    List<Page> getPagesByLemma(String lemma);
+
+    @Query(value ="select p.* " +
+            "FROM lemmas l " +
+            "LEFT JOIN indexes i ON l.id = i.lemma_id " +
+            "LEFT JOIN pages p ON p.id = i.page_id " +
+            "WHERE p.id IN (:pageIndexes) " +
+            "AND l.lemma LIKE :lemma", nativeQuery = true)
+    List<Page> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes);
 
 }

@@ -9,9 +9,10 @@ import searchengine.config.SearchCfg;
 import searchengine.dto.search.SearchError;
 import searchengine.dto.search.SearchResponse;
 import searchengine.model.Lemma;
-import searchengine.model.Site;
+import searchengine.model.Page;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -19,8 +20,7 @@ import java.util.*;
 public class SearchServiceImpl implements SearchService {
     private final SearchCfg defaultSearchCfg;
     private final LemmaService lemmaService;
-    private final SiteService siteService;
-    private final MorphologyService morphologyService;
+    private final PageService pageService;
 
     @Override
     public ResponseEntity<?> search(SearchCfg searchCfg) {
@@ -33,31 +33,25 @@ public class SearchServiceImpl implements SearchService {
             searchCfg.setLimit(defaultSearchCfg.getLimit());
         }
 
-        List<Lemma> lemmas = getLemmas(searchCfg);
+//        todo: переписать на получение MAP<String, Integer>
+//        List<Lemma> lemmas = lemmaService.getSortedLemmas(searchCfg);
+
+        Map<String, Integer> lemmasFrequency = lemmaService.collectLemmaFrequency(searchCfg);
+
+        List<String> sortedLemmas = lemmasFrequency.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .map(l -> l.getKey()).toList();
+
+        List<Page> pages = pageService.getPages(sortedLemmas);
+
+        pages.forEach(p -> System.out.printf("%s%s \n", p.getSite().getUrl(), p.getPath()));
 
         SearchResponse response = new SearchResponse();
         response.setResult(true);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 
-    @Override
-    public List<Lemma> getLemmas(SearchCfg searchCfg) {
-        List<Lemma> lemmas;
-        try {
-            Map<String, Integer> queryLemmas = morphologyService.collectLemmas(searchCfg.getQuery());
 
-            if (searchCfg.getSite() == null) {
-                lemmas = lemmaService.getSortedFoundList(queryLemmas.keySet(), searchCfg.getTreshhold());
-            } else {
-                Site site = siteService.getByUrl(searchCfg.getSite());
-                lemmas = lemmaService.getSortedFoundList(queryLemmas.keySet(), searchCfg.getTreshhold(), site.getId());
-            }
 
-            lemmas.forEach(l -> System.out.println(l.getLemma() + " - " + l.getFrequency()));
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return Collections.emptyList();
-        }
-        return lemmas;
-    }
+
 }

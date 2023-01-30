@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import searchengine.model.Lemma;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Repository
@@ -34,19 +35,19 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
 
     @Query(value ="SELECT * " +
             "FROM lemmas " +
-            "WHERE lemma IN (:lemmasInQuery)", nativeQuery = true)
-    List<Lemma> getSortedFoundList(Set<String> lemmasInQuery);
-
-    @Query(value ="SELECT * " +
-            "FROM lemmas " +
             "WHERE site_id = :siteId " +
             "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
-    List<Lemma> getSortedFoundList(Set<String> lemmasInQuery, int siteId);
+    List<Lemma> getLemmasFoundList(Set<String> lemmasInQuery, int siteId);
 
     @Query(value ="SELECT COUNT(*) " +
             "FROM lemmas " +
             "WHERE site_id = :siteId", nativeQuery = true)
     Integer getLemmasCount(int siteId);
 
+    @Query(value ="SELECT SUM(l.frequency) " +
+            "FROM lemmas l " +
+            "WHERE l.lemma LIKE :lemma " +
+            "GROUP BY l.lemma", nativeQuery = true)
+    Integer getLemmaFrequency(String lemma);
 
 }

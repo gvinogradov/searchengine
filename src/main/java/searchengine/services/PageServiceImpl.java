@@ -4,12 +4,14 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
+import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.repository.PageRepository;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -18,6 +20,7 @@ import java.util.List;
 public class PageServiceImpl implements PageService, Serializable {
 
     private final PageRepository pageRepository;
+    private final IndexService indexService;
 
     @Override
     public Page save(Page page) {
@@ -27,6 +30,33 @@ public class PageServiceImpl implements PageService, Serializable {
     @Override
     public Page get(int pageId) {
         return pageRepository.findById(pageId).get();
+    }
+
+    @Override
+    public List<Page> getPages(List<String> lemmas) {
+        List<Page> pages = null;
+        for (String lemma: lemmas) {
+            if (pages == null) {
+                pages = getPagesByLemma(lemma);
+                continue;
+            }
+            List<Integer> pageIndexes = pages.stream().map(p -> p.getId()).toList();
+            pages = findPagesByIdAndLemma(lemma, pageIndexes);
+            if (pages.isEmpty()) {
+                return Collections.emptyList();
+            }
+        }
+        return pages == null ? Collections.emptyList() : pages;
+    }
+
+    @Override
+    public List<Page> getPagesByLemma(String lemma) {
+        return pageRepository.getPagesByLemma(lemma);
+    }
+
+    @Override
+    public List<Page> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes) {
+        return pageRepository.findPagesByIdAndLemma(lemma, pageIndexes);
     }
 
     @Override

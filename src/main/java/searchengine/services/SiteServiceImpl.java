@@ -2,6 +2,7 @@ package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import searchengine.config.SearchCfg;
 import searchengine.config.SiteCfg;
 import searchengine.config.SitesList;
 import searchengine.model.Site;
@@ -10,6 +11,7 @@ import searchengine.repository.SiteRepository;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -62,6 +64,13 @@ public class SiteServiceImpl implements SiteService {
             sitesToParsing.add(site);
         }
         return sitesToParsing;
+    }
+
+    @Override
+    public List<Site> getSites(SearchCfg searchCfg) {
+        return searchCfg.getSite() == null ?
+                siteRepository.findAll() :
+                List.of(getByUrl(searchCfg.getSite()));
     }
 
     @Override
