@@ -4,15 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
-import searchengine.model.Lemma;
+import searchengine.dto.search.IPageRank;
+import searchengine.dto.search.PageRankImpl;
 import searchengine.model.Page;
 import searchengine.model.Site;
 import searchengine.repository.PageRepository;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 
 @Service
@@ -32,31 +32,74 @@ public class PageServiceImpl implements PageService, Serializable {
         return pageRepository.findById(pageId).get();
     }
 
-    @Override
-    public List<Page> getPages(List<String> lemmas) {
-        List<Page> pages = null;
-        for (String lemma: lemmas) {
-            if (pages == null) {
-                pages = getPagesByLemma(lemma);
-                continue;
-            }
-            List<Integer> pageIndexes = pages.stream().map(p -> p.getId()).toList();
-            pages = findPagesByIdAndLemma(lemma, pageIndexes);
-            if (pages.isEmpty()) {
-                return Collections.emptyList();
-            }
-        }
-        return pages == null ? Collections.emptyList() : pages;
+    private List<Page> makeSortedPages(List<IPageRank> totalRankPages) {
+
+//        todo: сделать сортировку
+//        todo: убрать лишние сетоды из интерфейсов
+        List<Integer> sortedPagesId = totalRankPages.stream()
+                .sorted(Comparator.comparing(IPageRank::getLemmaRank))
+                .map(item -> item.getPageId())
+                .toList();
+        List<Page> pages = pageRepository.getPagesById(sortedPagesId);
+
+        return pages;
     }
 
     @Override
-    public List<Page> getPagesByLemma(String lemma) {
+    public List<Page> getPagesRelevance(List<String> lemmas) {
+        List<IPageRank> totalRankPages = null;
+        for (String lemma: lemmas) {
+            if (totalRankPages == null) {
+                totalRankPages = getPagesByLemma(lemma);
+                continue;
+            }
+            List<Integer> pageIndexes = totalRankPages.stream().map(item -> item.getPageId()).toList();
+            List<IPageRank> lemmaRankPages = findPagesByIdAndLemma(lemma, pageIndexes);
+            totalRankPages = mergeAndIncrementRank(totalRankPages, lemmaRankPages);
+
+            if (totalRankPages.isEmpty()) {
+                return Collections.emptyList();
+            }
+        }
+
+        List<Page> pagesByRelevance = makeSortedPages(totalRankPages);
+
+        return pagesByRelevance;
+    }
+
+    @Override
+    public List<IPageRank> getPagesByLemma(String lemma) {
         return pageRepository.getPagesByLemma(lemma);
     }
 
     @Override
-    public List<Page> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes) {
+    public List<IPageRank> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes) {
         return pageRepository.findPagesByIdAndLemma(lemma, pageIndexes);
+    }
+
+    @Override
+    public IPageRank findExistItem(List<IPageRank> currentList, IPageRank findItem) {
+        for (IPageRank item: currentList) {
+            if (item.getPageId().equals(findItem.getPageId())) {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public List<IPageRank> mergeAndIncrementRank(List<IPageRank> totalRankPages,
+                                                        List<IPageRank> lemmaRankPages) {
+        List<IPageRank> result = new ArrayList<>();
+        for (IPageRank newPageRank: lemmaRankPages) {
+            IPageRank foundItem = findExistItem(totalRankPages, newPageRank);
+            if (foundItem != null) {
+                IPageRank sumRankItem = new PageRankImpl(foundItem.getPageId(),
+                        foundItem.getLemmaRank() + newPageRank.getLemmaRank());
+                result.add(sumRankItem);
+            }
+        }
+        return result;
     }
 
     @Override

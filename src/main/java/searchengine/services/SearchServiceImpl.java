@@ -8,11 +8,9 @@ import org.springframework.stereotype.Service;
 import searchengine.config.SearchCfg;
 import searchengine.dto.search.SearchError;
 import searchengine.dto.search.SearchResponse;
-import searchengine.model.Lemma;
 import searchengine.model.Page;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,16 +23,13 @@ public class SearchServiceImpl implements SearchService {
     @Override
     public ResponseEntity<?> search(SearchCfg searchCfg) {
         searchCfg.setTreshhold(defaultSearchCfg.getTreshhold());
-        if (searchCfg.getQuery() == null) {
+        if (searchCfg.getQuery() == "") {
             return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"),
-                    HttpStatus.NOT_FOUND);
+                    HttpStatus.NO_CONTENT);
         }
         if (searchCfg.getLimit() == 0) {
             searchCfg.setLimit(defaultSearchCfg.getLimit());
         }
-
-//        todo: переписать на получение MAP<String, Integer>
-//        List<Lemma> lemmas = lemmaService.getSortedLemmas(searchCfg);
 
         Map<String, Integer> lemmasFrequency = lemmaService.collectLemmaFrequency(searchCfg);
 
@@ -42,9 +37,9 @@ public class SearchServiceImpl implements SearchService {
                 .sorted(Map.Entry.comparingByValue())
                 .map(l -> l.getKey()).toList();
 
-        List<Page> pages = pageService.getPages(sortedLemmas);
+        List<Page> pagesRelevance = pageService.getPagesRelevance(sortedLemmas);
 
-        pages.forEach(p -> System.out.printf("%s%s \n", p.getSite().getUrl(), p.getPath()));
+//        pages.forEach(p -> System.out.printf("%s%s \n", p.getSite().getUrl(), p.getPath()));
 
         SearchResponse response = new SearchResponse();
         response.setResult(true);
