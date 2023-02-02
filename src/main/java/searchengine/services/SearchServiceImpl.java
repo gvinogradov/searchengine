@@ -2,6 +2,7 @@ package searchengine.services;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jsoup.Jsoup;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,14 @@ public class SearchServiceImpl implements SearchService {
     private final LemmaService lemmaService;
     private final PageService pageService;
     private final SiteService siteService;
+    private final MorphologyService morphologyService;
+
+    private String getTitle(String html) {
+        return Jsoup.parse(html).title();
+    }
 
 
-    private SearchResponse createResponse(List<PageRelevanceResponse> pagesRelevance, List<String> lemmas) {
+    private SearchResponse createResponse(List<PageRelevanceResponse> pagesRelevance, List<String> lemmas, SearchCfg searchCfg) {
         SearchResponse response = new SearchResponse();
         response.setResult(true);
         response.setCount(pagesRelevance.size());
@@ -35,11 +41,12 @@ public class SearchServiceImpl implements SearchService {
             SearchItem searchItem = new SearchItem();
             searchItem.setSite(page.getSite().getUrl());
             searchItem.setSiteName(page.getSite().getName());
-            //            todo: getTitle via JSoup
-            searchItem.setTitle("test title");
+            searchItem.setTitle(getTitle(page.getContent()));
             searchItem.setUri(page.getPath());
-//            todo: makeSnippet() via JSoup
-            searchItem.setSnippet("test snippettest snippettest snippettest snippettest snippettest snippettest snippettest snippettest snippettest snippet");
+//            searchItem.setSnippet("test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet ");
+            searchItem.setSnippet(morphologyService
+                    .getSnippet(page.getContent(),
+                            lemmas, searchCfg.getSnippetSize()));
             searchItem.setRelevance(pageRelevance.getRelevance());
             data.add(searchItem);
         }
@@ -49,7 +56,8 @@ public class SearchServiceImpl implements SearchService {
 
     @Override
     public ResponseEntity<?> search(SearchCfg searchCfg) {
-        searchCfg.setTreshhold(defaultSearchCfg.getTreshhold());
+        searchCfg.setThreshold(defaultSearchCfg.getThreshold());
+        searchCfg.setSnippetSize(defaultSearchCfg.getSnippetSize());
         if (searchCfg.getQuery() == "") {
             return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"),
                     HttpStatus.NO_CONTENT);
@@ -67,7 +75,7 @@ public class SearchServiceImpl implements SearchService {
                 .map(l -> l.getKey()).toList();
 
         List<PageRelevanceResponse> pagesRelevance = pageService.getPagesRelevance(sortedLemmas, siteId);
-        SearchResponse response = createResponse(pagesRelevance, sortedLemmas);
+        SearchResponse response = createResponse(pagesRelevance, sortedLemmas, searchCfg);
 
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

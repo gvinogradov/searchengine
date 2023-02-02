@@ -14,5 +14,6 @@ public class SearchCfg {
     private String site;
     private int offset;
     private int limit;
-    private int treshhold;
+    private int threshold;
+    private int snippetSize;
 }

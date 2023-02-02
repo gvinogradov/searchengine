@@ -45,7 +45,7 @@ public class LemmaServiceImpl implements LemmaService{
             return Collections.emptyMap();
         }
 
-        lemmasFrequency.values().removeIf(v -> v > searchCfg.getTreshhold());
+        lemmasFrequency.values().removeIf(v -> v > searchCfg.getThreshold());
         return lemmasFrequency;
     }
 

@@ -38,4 +38,5 @@ parsing-settings:
 search-settings:
   limit: 20
   offset: 0
-  treshhold: 500
+  threshold: 500
+  snippetSize: 50
