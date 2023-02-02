@@ -33,12 +33,6 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
             "WHERE site_id = :siteId AND lemma LIKE :lemma", nativeQuery = true)
     Lemma get(int siteId, String lemma);
 
-    @Query(value ="SELECT * " +
-            "FROM lemmas " +
-            "WHERE site_id = :siteId " +
-            "AND lemma IN (:lemmasInQuery)", nativeQuery = true)
-    List<Lemma> getLemmasFoundList(Set<String> lemmasInQuery, int siteId);
-
     @Query(value ="SELECT COUNT(*) " +
             "FROM lemmas " +
             "WHERE site_id = :siteId", nativeQuery = true)
@@ -49,5 +43,11 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
             "WHERE l.lemma LIKE :lemma " +
             "GROUP BY l.lemma", nativeQuery = true)
     Integer getLemmaFrequency(String lemma);
+
+    @Query(value ="SELECT l.frequency " +
+            "FROM lemmas l " +
+            "WHERE l.lemma LIKE :lemma " +
+            "AND l.site_id = :siteId", nativeQuery = true)
+    Integer getLemmaFrequency(String lemma, int siteId);
 
 }

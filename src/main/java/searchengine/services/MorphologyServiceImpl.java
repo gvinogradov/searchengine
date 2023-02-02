@@ -14,7 +14,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class MorphologyServiceImpl implements MorphologyService {
     private final LuceneMorphology luceneMorphology;
-    private static final String[] PARTICLES_NAMES = new String[]{"МЕЖД", "ПРЕДЛ", "СОЮЗ"};
+    private static final String[] PARTICLES_NAMES = new String[]{"МЕЖД", "ПРЕДЛ", "СОЮЗ", "ЧАСТ"};
 
     public List<String> morphologyForms(String word) {
         if (!luceneMorphology.checkString(word)) {

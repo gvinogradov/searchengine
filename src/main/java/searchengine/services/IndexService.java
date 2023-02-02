@@ -13,7 +13,6 @@ import java.util.Map;
 
 @Service
 public interface IndexService {
-    Index save(Index index);
     void saveAll(List<Index> indexes);
     void deleteAll();
     List<Index> addIndexes(Map<String, Integer> lemmaMap, Site site, Page page);

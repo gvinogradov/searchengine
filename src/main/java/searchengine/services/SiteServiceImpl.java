@@ -36,13 +36,8 @@ public class SiteServiceImpl implements SiteService {
         return siteRepository.getByUrl(url);
     }
 
-//    todo: убрать проверку и передавать статус
     @Override
     public Site createSite(SiteCfg siteCfg, Status status, String lastError) {
-//        Site site = null;
-//        boolean isAvailable = networkService.checkSiteConnection(siteCfg.getUrl());
-//        String lastError = isAvailable ? "" : "Сайт не доступен";
-//        Status status = isAvailable ? Status.INDEXING : Status.FAILED;
         Site site = new Site();
         site.setUrl(siteCfg.getUrl());
         site.setName(siteCfg.getName());
@@ -52,7 +47,6 @@ public class SiteServiceImpl implements SiteService {
         return site;
     }
 
-//    todo: перенести статус
     @Override
     public List<Site> getSitesToParsing(SitesList sites) {
         List<Site> sitesToParsing = new ArrayList<>();
@@ -64,18 +58,6 @@ public class SiteServiceImpl implements SiteService {
             sitesToParsing.add(site);
         }
         return sitesToParsing;
-    }
-
-    @Override
-    public List<Site> getSites(SearchCfg searchCfg) {
-        return searchCfg.getSite() == null ?
-                siteRepository.findAll() :
-                List.of(getByUrl(searchCfg.getSite()));
-    }
-
-    @Override
-    public Site addSiteToParsing(Site site) {
-        return null;
     }
 
     @Override

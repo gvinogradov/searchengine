@@ -19,11 +19,6 @@ public class IndexServiceImpl implements IndexService {
     private final LemmaService lemmaService;
 
     @Override
-    public Index save(Index index) {
-        return indexRepository.saveAndFlush(index);
-    }
-
-    @Override
     public void saveAll(List<Index> indexes) {
         indexRepository.saveAll(indexes);
     }

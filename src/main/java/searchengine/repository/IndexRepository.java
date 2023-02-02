@@ -19,12 +19,6 @@ public interface IndexRepository extends JpaRepository<Index, Integer> {
             "group by lemma_id", nativeQuery = true)
     List<Integer> getLemmaIdListByPageId(int pageId);
 
-    @Query(value ="SELECT COUNT(*) " +
-            "FROM indexes " +
-            "where page_id = :pageId " +
-            "AND lemma_id = :lemmaId", nativeQuery = true)
-    Integer getIndexCount(int pageId, int lemmaId);
-
     @Transactional
     @Modifying(clearAutomatically = true)
     @Query(value ="DELETE FROM indexes " +

@@ -15,9 +15,6 @@ public interface SiteRepository extends JpaRepository<Site, Integer> {
     @Query(value = "SELECT * from sites where url LIKE %:url% LIMIT 1", nativeQuery = true)
     Site getByUrl(String url);
 
-    @Query(value = "SELECT id from sites where url LIKE %:url% LIMIT 1", nativeQuery = true)
-    Integer getSiteIdByUrl(String url);
-
     @Query(value = "SELECT * from sites where status LIKE %:status%  LIMIT 1", nativeQuery = true)
     Site findAnyStatus(Status status);
 

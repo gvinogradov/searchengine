@@ -16,8 +16,6 @@ public interface SiteService {
     Site getByUrl(String url);
     Site createSite(SiteCfg siteCfg, Status status, String lastError);
     List<Site> getSitesToParsing(SitesList sites);
-    List<Site> getSites(SearchCfg searchCfg);
-    Site addSiteToParsing(Site site);
     List<Site> getAll();
     void deleteAll();
     boolean isIndexing();

@@ -29,31 +29,13 @@ public class LemmaServiceImpl implements LemmaService{
     }
 
     @Override
-    public List<Lemma> getSortedLemmas(SearchCfg searchCfg) {
-        List<Lemma> lemmas = new ArrayList<>();
-        try {
-            Set<String> queryLemmas = morphologyService.getLemmaSet(searchCfg.getQuery());
-            List<Site> sites = siteService.getSites(searchCfg);
-            for (Site site: sites) {
-                lemmas.addAll(getFoundLemmas(queryLemmas, site.getId()));
-            }
-        } catch (Exception e) {
-            log.error(e.getMessage());
-            return Collections.emptyList();
-        }
-        return lemmas.stream()
-                .filter(l -> l.getFrequency() <= searchCfg.getTreshhold())
-                .sorted()
-                .toList();
-    }
-
-    @Override
-    public Map<String, Integer> collectLemmaFrequency(SearchCfg searchCfg) {
+    public Map<String, Integer> collectLemmaFrequency(SearchCfg searchCfg, Integer siteId) {
         Map<String, Integer> lemmasFrequency = new HashMap<>();
         try {
             Set<String> queryLemmas = morphologyService.getLemmaSet(searchCfg.getQuery());
             for (String lemma: queryLemmas) {
-                Integer frequency = lemmaRepository.getLemmaFrequency(lemma);
+                Integer frequency = siteId == null ? lemmaRepository.getLemmaFrequency(lemma)
+                        : lemmaRepository.getLemmaFrequency(lemma, siteId);
                 if (frequency != null) {
                     lemmasFrequency.put(lemma, frequency);
                 }
@@ -97,17 +79,5 @@ public class LemmaServiceImpl implements LemmaService{
     public Integer getLemmasCount(int siteId) {
         Integer count = lemmaRepository.getLemmasCount(siteId);
         return count == null ? 0 : count;
-    }
-
-    @Override
-    public List<Lemma> getFoundLemmas(Set<String> lemmasInQuery, int siteId) {
-        List<Lemma> foundLemmas = lemmaRepository.getLemmasFoundList(lemmasInQuery, siteId);
-        for (String lemma: lemmasInQuery) {
-            if (!foundLemmas.stream()
-                    .anyMatch(l -> l.getLemma().equals(lemma))) {
-                return Collections.emptyList();
-            }
-        }
-        return foundLemmas;
     }
 }

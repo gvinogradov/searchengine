@@ -33,13 +33,24 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +
+            "WHERE l.site_id = :siteId " +
+            "AND l.lemma LIKE :lemma", nativeQuery = true)
+    List<IPageRank> getPagesByLemma(String lemma, Integer siteId);
+
+    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+            "FROM lemmas l " +
+            "LEFT JOIN indexes i ON l.id = i.lemma_id " +
+            "LEFT JOIN pages p ON p.id = i.page_id " +
             "WHERE p.id IN (:pageIndexes) " +
             "AND l.lemma LIKE :lemma", nativeQuery = true)
     List<IPageRank> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes);
 
-    @Query(value ="SELECT p.* " +
-            "FROM pages p " +
-            "WHERE p.id IN (:sortedPagesId)", nativeQuery = true)
-    List<Page> getPagesById(List<Integer> sortedPagesId);
-
+    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+            "FROM lemmas l " +
+            "LEFT JOIN indexes i ON l.id = i.lemma_id " +
+            "LEFT JOIN pages p ON p.id = i.page_id " +
+            "WHERE l.site_id = :siteId" +
+            "AND p.id IN (:pageIndexes) " +
+            "AND l.lemma LIKE :lemma", nativeQuery = true)
+    List<IPageRank> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes, Integer siteId);
 }
