@@ -49,7 +49,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +
-            "WHERE l.site_id = :siteId" +
+            "WHERE l.site_id = :siteId " +
             "AND p.id IN (:pageIndexes) " +
             "AND l.lemma LIKE :lemma", nativeQuery = true)
     List<IPageRank> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes, Integer siteId);

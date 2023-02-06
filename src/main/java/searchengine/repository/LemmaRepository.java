@@ -7,10 +7,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import searchengine.model.Lemma;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 @Repository
 public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
 

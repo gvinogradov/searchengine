@@ -3,7 +3,6 @@ package searchengine.model;
 import lombok.Data;
 
 import javax.persistence.*;
-import java.util.Objects;
 
 @Data
 @Entity
@@ -24,7 +23,7 @@ public class Page {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne//(cascade = CascadeType.MERGE, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
@@ -37,6 +36,4 @@ public class Page {
     @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
     private String content;
 
-//    @OneToMany(mappedBy = "page")
-//    private List<Index> indexes;
 }

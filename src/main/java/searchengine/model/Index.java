@@ -11,11 +11,11 @@ public class Index {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
-    @ManyToOne//(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "lemma_id", nullable = false)
     private Lemma lemma;
 
-    @ManyToOne//(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "page_id", nullable = false)
     private Page page;
 

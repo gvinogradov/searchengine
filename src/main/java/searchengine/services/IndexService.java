@@ -1,12 +1,9 @@
 package searchengine.services;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import searchengine.model.Index;
-import searchengine.model.Lemma;
 import searchengine.model.Page;
 import searchengine.model.Site;
-import searchengine.repository.IndexRepository;
 
 import java.util.List;
 import java.util.Map;

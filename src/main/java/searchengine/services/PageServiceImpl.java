@@ -4,7 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.springframework.stereotype.Service;
-import searchengine.config.SearchCfg;
 import searchengine.dto.search.IPageRank;
 import searchengine.dto.search.PageRankImpl;
 import searchengine.dto.search.PageRelevanceResponse;
@@ -14,7 +13,9 @@ import searchengine.repository.PageRepository;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 @Service
@@ -43,6 +44,9 @@ public class PageServiceImpl implements PageService, Serializable {
 
     @Override
     public List<PageRelevanceResponse> getPagesRelevance(List<String> lemmas, Integer siteId) {
+        if (lemmas.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<IPageRank> totalRankPages = null;
         for (String lemma: lemmas) {
             if (totalRankPages == null) {

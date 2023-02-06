@@ -47,7 +47,8 @@ public class SearchServiceImpl implements SearchService {
                     page.getContent(), lemmas, searchCfg.getSnippetSize()));
             searchItem.setRelevance(pageRelevance.getRelevance());
             data.add(searchItem);
-        } response.setData(data);
+        }
+        response.setData(data);
         return response;
     }
 
@@ -66,9 +67,6 @@ public class SearchServiceImpl implements SearchService {
 
         Map<String, Integer> lemmasFrequency = lemmaService.collectLemmaFrequency(searchCfg, siteId);
         List<String> sortedLemmas = lemmasFrequency.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(l -> l.getKey()).toList();
-        if (sortedLemmas.isEmpty()) {
-            return new ResponseEntity<>(new SearchError(false, "Ничего не нашли"), HttpStatus.OK);
-        }
 
         List<PageRelevanceResponse> pagesRelevance = pageService.getPagesRelevance(sortedLemmas, siteId);
         SearchResponse response = createResponse(pagesRelevance, sortedLemmas, searchCfg);

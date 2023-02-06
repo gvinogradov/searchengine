@@ -1,17 +1,17 @@
 package searchengine.utils;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.springframework.http.HttpStatus;
 import searchengine.config.ParserCfg;
-import searchengine.model.*;
+import searchengine.model.Site;
 import searchengine.services.IndexingService;
 import searchengine.services.NetworkService;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ForkJoinTask;
 import java.util.concurrent.RecursiveTask;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,37 +23,29 @@ public class Parser extends RecursiveTask<Boolean> {
     private Site site;
     private String url;
     private Set<String> parsedUrls;
-    @Getter
-    private static ParserCfg parserCfg;
-    private static NetworkService networkService;
-    private static IndexingService indexingService;
+    private ParserCfg parserCfg;
+    private NetworkService networkService;
+    private IndexingService indexingService;
     private static AtomicBoolean isCanceled = new AtomicBoolean();
     private final static boolean PARSE_SUCCESS = true;
     private final static boolean PARSE_FAIL = false;
 
-    public Parser(Site site, String url, Set<String> parsedUrls) {
+    public Parser(Site site, String url, Set<String> parsedUrls, NetworkService networkService, IndexingService indexingService, ParserCfg parserCfg) {
         this.site = site;
         this.url = url;
         this.parsedUrls = parsedUrls;
-    }
-
-    public Parser(Site site, String url, NetworkService networkService, IndexingService indexingService, ParserCfg parserCfg) {
-        this(site, url, new HashSet<>());
-        Parser.parserCfg = parserCfg;
-        Parser.networkService = networkService;
-        Parser.indexingService = indexingService;
+        this.parserCfg = parserCfg;
+        this.networkService = networkService;
+        this.indexingService = indexingService;
     }
 
     public static void setIsCanceled(boolean isCanceled) {
         Parser.isCanceled.set(isCanceled);
     }
 
-//    todo: переделать regex
     public boolean isSubURL(String URL, String subURL) {
         String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";;
-//        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]+";
         return subURL.matches(regex);
-//        return  (subURL.startsWith(URL) || subURL.startsWith("/")) && !subURL.endsWith("#");
     }
 
     private List<String> getUrls(Document document) {
@@ -90,13 +82,13 @@ public class Parser extends RecursiveTask<Boolean> {
                 return PARSE_SUCCESS;
             }
 
-            Parser.indexingService.parsePage(site, response);
+            indexingService.parsePage(site, response);
             log.info(url + " - " + parsedUrls.size());
 
             for (String child : getUrls(response.parse())) {
                 if (isSubURL(site.getUrl(), child) &&
                         !parsedUrls.contains(child)) {
-                    Parser newTask = new Parser(site, child, parsedUrls);
+                    Parser newTask = new Parser(site, child, parsedUrls, networkService, indexingService, parserCfg);
                     tasks.add(newTask);
                 }
             }

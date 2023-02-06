@@ -1,7 +1,6 @@
 package searchengine.services;
 
 import org.jsoup.Connection;
-import searchengine.config.SearchCfg;
 import searchengine.dto.search.PageRelevanceResponse;
 import searchengine.model.Page;
 import searchengine.model.Site;

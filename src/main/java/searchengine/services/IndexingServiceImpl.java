@@ -14,6 +14,7 @@ import searchengine.utils.ThreadHandler;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ForkJoinPool;
 
 @Slf4j
 @Service
@@ -63,7 +64,8 @@ public class IndexingServiceImpl implements IndexingService {
 
             for (Site site : sitesToParsing) {
                 if (site.getStatus() == Status.INDEXING) {
-                    ThreadHandler task = new ThreadHandler(parserCfg, networkService, siteService,
+                    ThreadHandler task = new ThreadHandler(new ForkJoinPool(parserCfg.getParallelism()),
+                            parserCfg, networkService, siteService,
                             this, site, site.getUrl() + "/");
                     Thread parseSite = new Thread(task);
                     parseSite.start();

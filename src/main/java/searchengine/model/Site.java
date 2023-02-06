@@ -4,7 +4,6 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Entity
@@ -29,10 +28,4 @@ public class Site {
 
     @Column(columnDefinition = "VARCHAR(255)", nullable = false)
     String name;
-
-//    @OneToMany(mappedBy = "site")
-//    List<Page> pages;
-
-//    @OneToMany(mappedBy = "site")
-//    List<Lemma> lemmas;
 }

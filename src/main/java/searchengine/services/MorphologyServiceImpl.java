@@ -26,7 +26,6 @@ public class MorphologyServiceImpl implements MorphologyService {
         return luceneMorphology.getMorphInfo(word);
     }
 
-
     private boolean anyWordBaseBelongToParticle(List<String> wordBaseForms) {
         return wordBaseForms.stream().anyMatch(this::hasParticleProperty);
     }
@@ -70,18 +69,28 @@ public class MorphologyServiceImpl implements MorphologyService {
         return words;
     }
 
-    @Override
-    public Set<String> getLemmaSet(String html) {
-        return collectLemmas(html).keySet();
+    private List<String> getNormalWords(String word) {
+        List<String> wordBaseForms = morphologyForms(word);
+        if (wordBaseForms.isEmpty()
+                || anyWordBaseBelongToParticle(wordBaseForms)) {
+            return Collections.emptyList();
+        }
+        List<String> normalForms = luceneMorphology.getNormalForms(word);
+        return normalForms;
     }
 
     private boolean containsAny(List<String> lemmas, List<String> words) {
-        for (String lemma: lemmas) {
+        for (String lemma : lemmas) {
             if (words.contains(lemma)) {
                 return true;
             }
         }
         return false;
+    }
+
+    @Override
+    public Set<String> getLemmaSet(String html) {
+        return collectLemmas(html).keySet();
     }
 
     @Override
@@ -117,17 +126,6 @@ public class MorphologyServiceImpl implements MorphologyService {
         resultText.forEach(s -> snippet.append(s));
         return maxStartIndex < text.size() - snippetSize ?
                 snippet.append("...").toString() : snippet.toString();
-    }
-
-
-    private List<String> getNormalWords(String word) {
-        List<String> wordBaseForms = morphologyForms(word);
-        if (wordBaseForms.isEmpty()
-                || anyWordBaseBelongToParticle(wordBaseForms)) {
-            return Collections.emptyList();
-        }
-        List<String> normalForms = luceneMorphology.getNormalForms(word);
-        return normalForms;
     }
 
     @Override
