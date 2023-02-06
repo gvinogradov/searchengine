@@ -9,8 +9,8 @@ import org.jsoup.safety.Whitelist;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-
-import static org.springframework.web.util.HtmlUtils.htmlUnescape;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -49,59 +49,85 @@ public class MorphologyServiceImpl implements MorphologyService {
                 .split("\\s+");
     }
 
+    private List<String> listOfAllText(String html) {
+        String text = Jsoup.clean(html, Whitelist.none());
+        text = Parser.unescapeEntities(text, false);
+        text = text.replaceAll("([^A-Яа-я\\s])", " ");
+
+        List<String> words = new ArrayList<>();
+        Pattern pattern = Pattern.compile("[A-Яа-я]+");
+        Matcher matcher = pattern.matcher(text);
+        int start = 0;
+        int end = 0;
+        while (matcher.find()) {
+            start = matcher.start();
+            if (start > end) {
+                words.add(text.substring(end, start));
+            }
+            words.add(matcher.group());
+            end = start + matcher.group().length();
+        }
+        return words;
+    }
+
     @Override
     public Set<String> getLemmaSet(String html) {
         return collectLemmas(html).keySet();
     }
 
+    private boolean containsAny(List<String> lemmas, List<String> words) {
+        for (String lemma: lemmas) {
+            if (words.contains(lemma)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public String getSnippet(String html, List<String> lemmas, int snippetSize) {
-        String[] words = arrayContainsRussianWords(html);
-        int[][] lemmasMap = new int[words.length][2];
+        List<String> text = listOfAllText(html);
+        int[] lemmasMap = new int[text.size()];
 
-        int max = 0;
-        int startSnippet = 0;
-        for (int i = 0; i < words.length; i++) {
-            String lemma = getNormalWord(words[i].toLowerCase());
-            if (lemma != null && lemmas.contains(lemma)) {
-                lemmasMap[i][0] = 1;
-                words[i] = "<b>" + words[i] + "</b>";
+        int startIndex = 0;
+        int sum = 0;
+        int maxStartIndex = 0;
+        int maxSum = 0;
+        for (int i = 0; i < text.size(); i++) {
+            List<String> words = getNormalWords(text.get(i).toLowerCase());
+            if (words != null && containsAny(lemmas, words)) {
+                lemmasMap[i] = 1;
+                sum++;
+                text.set(i, "<b>" + text.get(i) + "</b>");
             }
-            if (i > 0) {
-                lemmasMap[i][1] = lemmasMap[i][0] + lemmasMap[i - 1][1];
+            if ((i >= startIndex + snippetSize) && (i <= text.size() - snippetSize)) {
+                sum -= lemmasMap[startIndex++];
             }
-            if (i >= snippetSize) {
-                lemmasMap[i][1] = lemmasMap[i - snippetSize][0];
-                if (max <= lemmasMap[i][1]) {
-                    max = lemmasMap[i][1];
-                    startSnippet = i - snippetSize;
-                }
+            if (sum > maxSum) {
+                maxStartIndex = startIndex;
+                maxSum = sum;
             }
         }
 
-        Integer endSnippet = startSnippet + snippetSize < words.length - 1 ? startSnippet + snippetSize
-                : words.length - 1;
-        String[] resultText = words.length > snippetSize ? Arrays.copyOfRange(words, startSnippet, endSnippet)
-                : words;
-        String snippet = "... ";
-        for (String s : resultText) {
-            snippet = snippet + s + " ";
-        }
-        snippet.concat("...");
-
-        return snippet;
+        List<String> resultText = maxStartIndex + snippetSize > text.size() ?
+                text.subList(maxStartIndex, text.size()) :
+                text.subList(maxStartIndex, maxStartIndex + snippetSize);
+        StringBuilder snippet = maxStartIndex > 0 ?
+                new StringBuilder("...") : new StringBuilder();
+        resultText.forEach(s -> snippet.append(s));
+        return maxStartIndex < text.size() - snippetSize ?
+                snippet.append("...").toString() : snippet.toString();
     }
 
 
-    private String getNormalWord(String word) {
+    private List<String> getNormalWords(String word) {
         List<String> wordBaseForms = morphologyForms(word);
         if (wordBaseForms.isEmpty()
                 || anyWordBaseBelongToParticle(wordBaseForms)) {
-            return null;
+            return Collections.emptyList();
         }
         List<String> normalForms = luceneMorphology.getNormalForms(word);
-        return normalForms.isEmpty() ? null
-                : normalForms.get(0);
+        return normalForms;
     }
 
     @Override
@@ -109,13 +135,12 @@ public class MorphologyServiceImpl implements MorphologyService {
         String[] text = arrayContainsRussianWords(html);
         HashMap<String, Integer> lemmas = new HashMap<>();
         for (String word : text) {
-            String lemma = getNormalWord(word);
-            if (lemma == null) {
-                continue;
-            }
-            if (lemmas.putIfAbsent(lemma, 1) != null) {
-                lemmas.compute(lemma, (key, value) -> value + 1);
-            }
+            List<String> words = getNormalWords(word);
+            words.forEach(lemma -> {
+                if (lemmas.putIfAbsent(lemma, 1) != null) {
+                    lemmas.compute(lemma, (key, value) -> value + 1);
+                }
+            });
         }
         return lemmas;
     }

@@ -36,21 +36,18 @@ public class SearchServiceImpl implements SearchService {
         response.setCount(pagesRelevance.size());
 
         List<SearchItem> data = new ArrayList<>();
-        for (PageRelevanceResponse pageRelevance: pagesRelevance) {
+        for (PageRelevanceResponse pageRelevance : pagesRelevance) {
             Page page = pageRelevance.getPage();
             SearchItem searchItem = new SearchItem();
             searchItem.setSite(page.getSite().getUrl());
             searchItem.setSiteName(page.getSite().getName());
             searchItem.setTitle(getTitle(page.getContent()));
             searchItem.setUri(page.getPath());
-//            searchItem.setSnippet("test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet test snippet ");
-            searchItem.setSnippet(morphologyService
-                    .getSnippet(page.getContent(),
-                            lemmas, searchCfg.getSnippetSize()));
+            searchItem.setSnippet(morphologyService.getSnippet(
+                    page.getContent(), lemmas, searchCfg.getSnippetSize()));
             searchItem.setRelevance(pageRelevance.getRelevance());
             data.add(searchItem);
-        }
-        response.setData(data);
+        } response.setData(data);
         return response;
     }
 
@@ -59,20 +56,19 @@ public class SearchServiceImpl implements SearchService {
         searchCfg.setThreshold(defaultSearchCfg.getThreshold());
         searchCfg.setSnippetSize(defaultSearchCfg.getSnippetSize());
         if (searchCfg.getQuery() == "") {
-            return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"),
-                    HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"), HttpStatus.OK);
         }
         if (searchCfg.getLimit() == 0) {
             searchCfg.setLimit(defaultSearchCfg.getLimit());
         }
 
-        Integer siteId = searchCfg.getSite() == null ? null
-                : siteService.getByUrl(searchCfg.getSite()).getId();
+        Integer siteId = searchCfg.getSite() == null ? null : siteService.getByUrl(searchCfg.getSite()).getId();
 
         Map<String, Integer> lemmasFrequency = lemmaService.collectLemmaFrequency(searchCfg, siteId);
-        List<String> sortedLemmas = lemmasFrequency.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .map(l -> l.getKey()).toList();
+        List<String> sortedLemmas = lemmasFrequency.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(l -> l.getKey()).toList();
+        if (sortedLemmas.isEmpty()) {
+            return new ResponseEntity<>(new SearchError(false, "Ничего не нашли"), HttpStatus.OK);
+        }
 
         List<PageRelevanceResponse> pagesRelevance = pageService.getPagesRelevance(sortedLemmas, siteId);
         SearchResponse response = createResponse(pagesRelevance, sortedLemmas, searchCfg);
