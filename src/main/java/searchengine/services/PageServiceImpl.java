@@ -34,7 +34,7 @@ public class PageServiceImpl implements PageService, Serializable {
                 .sum();
 
         List<PageRelevanceResponse> pagesRelevance = new ArrayList<>();
-        for (IPageRank item: totalRankPages) {
+        for (IPageRank item : totalRankPages) {
             Page page = pageRepository.findById(item.getPageId()).get();
             Double relevance = Double.valueOf(item.getLemmaRank()) / absRelevance;
             pagesRelevance.add(new PageRelevanceResponse(page, relevance));
@@ -48,7 +48,7 @@ public class PageServiceImpl implements PageService, Serializable {
             return Collections.emptyList();
         }
         List<IPageRank> totalRankPages = null;
-        for (String lemma: lemmas) {
+        for (String lemma : lemmas) {
             if (totalRankPages == null) {
                 totalRankPages = getPagesByLemma(lemma, siteId);
                 continue;
@@ -75,7 +75,7 @@ public class PageServiceImpl implements PageService, Serializable {
     }
 
     private IPageRank findExistItem(List<IPageRank> currentList, IPageRank findItem) {
-        for (IPageRank item: currentList) {
+        for (IPageRank item : currentList) {
             if (item.getPageId().equals(findItem.getPageId())) {
                 return item;
             }
@@ -84,9 +84,9 @@ public class PageServiceImpl implements PageService, Serializable {
     }
 
     private List<IPageRank> mergeAndIncrementRank(List<IPageRank> totalRankPages,
-                                                        List<IPageRank> lemmaRankPages) {
+                                                  List<IPageRank> lemmaRankPages) {
         List<IPageRank> result = new ArrayList<>();
-        for (IPageRank newPageRank: lemmaRankPages) {
+        for (IPageRank newPageRank : lemmaRankPages) {
             IPageRank foundItem = findExistItem(totalRankPages, newPageRank);
             if (foundItem != null) {
                 IPageRank sumRankItem = new PageRankImpl(foundItem.getPageId(),

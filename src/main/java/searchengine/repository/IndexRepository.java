@@ -12,7 +12,7 @@ import java.util.List;
 @Repository
 public interface IndexRepository extends JpaRepository<Index, Integer> {
 
-    @Query(value ="SELECT lemma_id " +
+    @Query(value = "SELECT lemma_id " +
             "FROM indexes " +
             "where page_id = :pageId " +
             "group by lemma_id", nativeQuery = true)
@@ -20,7 +20,7 @@ public interface IndexRepository extends JpaRepository<Index, Integer> {
 
     @Transactional
     @Modifying(clearAutomatically = true)
-    @Query(value ="DELETE FROM indexes " +
+    @Query(value = "DELETE FROM indexes " +
             "WHERE page_id = :pageId", nativeQuery = true)
     void deleteByPageId(int pageId);
 }

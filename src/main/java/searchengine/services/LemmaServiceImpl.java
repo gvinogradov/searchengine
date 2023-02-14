@@ -13,7 +13,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LemmaServiceImpl implements LemmaService{
+public class LemmaServiceImpl implements LemmaService {
     private final LemmaRepository lemmaRepository;
     private final SiteService siteService;
     private final MorphologyService morphologyService;
@@ -33,7 +33,7 @@ public class LemmaServiceImpl implements LemmaService{
         Map<String, Integer> lemmasFrequency = new HashMap<>();
         try {
             Set<String> queryLemmas = morphologyService.getLemmaSet(searchCfg.getQuery());
-            for (String lemma: queryLemmas) {
+            for (String lemma : queryLemmas) {
                 Integer frequency = siteId == null ? lemmaRepository.getLemmaFrequency(lemma)
                         : lemmaRepository.getLemmaFrequency(lemma, siteId);
                 if (frequency != null) {
@@ -45,7 +45,7 @@ public class LemmaServiceImpl implements LemmaService{
             return Collections.emptyMap();
         }
 
-        if (lemmasFrequency.size() > 1 ) {
+        if (lemmasFrequency.size() > 1) {
             lemmasFrequency.values().removeIf(v -> v > searchCfg.getThreshold());
         }
         return lemmasFrequency;
@@ -65,7 +65,7 @@ public class LemmaServiceImpl implements LemmaService{
 
     @Override
     public void mergeFrequency(List<Lemma> lemmas) {
-        for (Lemma lemma: lemmas) {
+        for (Lemma lemma : lemmas) {
             lemmaRepository.merge(lemma.getSite().getId(),
                     lemma.getLemma(),
                     1);

@@ -13,7 +13,7 @@ import java.io.IOException;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class NetworkServiceImpl implements NetworkService{
+public class NetworkServiceImpl implements NetworkService {
 
     private final ParserCfg parserCfg;
 

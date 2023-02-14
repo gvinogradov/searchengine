@@ -56,7 +56,7 @@ public class SearchServiceImpl implements SearchService {
     public ResponseEntity<?> search(SearchCfg searchCfg) {
         searchCfg.setThreshold(defaultSearchCfg.getThreshold());
         searchCfg.setSnippetSize(defaultSearchCfg.getSnippetSize());
-        if (searchCfg.getQuery() == "") {
+        if (searchCfg.getQuery().isEmpty()) {
             return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"), HttpStatus.OK);
         }
         if (searchCfg.getLimit() == 0) {

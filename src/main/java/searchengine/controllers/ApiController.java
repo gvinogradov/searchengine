@@ -49,7 +49,6 @@ public class ApiController {
     @GetMapping("/search")
     public ResponseEntity<?> search(SearchCfg searchCfg) {
         return searchService.search(searchCfg);
-//        return null;
     }
 
 }

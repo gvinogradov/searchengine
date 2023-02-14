@@ -10,7 +10,10 @@ import java.util.List;
 
 public interface PageService {
     List<PageRelevanceResponse> getPagesRelevance(List<String> lemmas, Integer siteId);
+
     void deleteAll();
+
     int getPagesCount(int siteId);
+
     Page addPage(Site site, Connection.Response response) throws IOException;
 }

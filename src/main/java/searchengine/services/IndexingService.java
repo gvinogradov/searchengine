@@ -6,7 +6,10 @@ import searchengine.model.Site;
 
 public interface IndexingService {
     IndexingResponse startIndexing();
+
     IndexingResponse stopIndexing();
+
     IndexingResponse indexPage(String url);
+
     void parsePage(Site site, Connection.Response response) throws Exception;
 }

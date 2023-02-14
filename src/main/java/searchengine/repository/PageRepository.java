@@ -22,14 +22,14 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             "WHERE site_id = :siteId", nativeQuery = true)
     Integer getPagesCount(int siteId);
 
-    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+    @Query(value = "SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +
             "WHERE l.lemma LIKE :lemma", nativeQuery = true)
     List<IPageRank> getPagesByLemma(String lemma);
 
-    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+    @Query(value = "SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +
@@ -37,7 +37,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             "AND l.lemma LIKE :lemma", nativeQuery = true)
     List<IPageRank> getPagesByLemma(String lemma, Integer siteId);
 
-    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+    @Query(value = "SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +
@@ -45,7 +45,7 @@ public interface PageRepository extends JpaRepository<Page, Integer> {
             "AND l.lemma LIKE :lemma", nativeQuery = true)
     List<IPageRank> findPagesByIdAndLemma(String lemma, List<Integer> pageIndexes);
 
-    @Query(value ="SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
+    @Query(value = "SELECT p.id as `pageId`, i.rank_index as `lemmaRank` " +
             "FROM lemmas l " +
             "LEFT JOIN indexes i ON l.id = i.lemma_id " +
             "LEFT JOIN pages p ON p.id = i.page_id " +

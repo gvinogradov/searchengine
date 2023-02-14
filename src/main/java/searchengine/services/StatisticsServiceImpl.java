@@ -46,7 +46,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         total.setSites(sites.size());
 
         List<DetailedStatisticsItem> detailed = new ArrayList<>();
-        for(Site site: sites) {
+        for (Site site : sites) {
             DetailedStatisticsItem item = getSiteStatistic(site);
             total.setPages(total.getPages() + item.getPages());
             total.setLemmas(total.getLemmas() + item.getLemmas());

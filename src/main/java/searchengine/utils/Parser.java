@@ -44,7 +44,8 @@ public class Parser extends RecursiveTask<Boolean> {
     }
 
     public boolean isSubURL(String URL, String subURL) {
-        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";;
+        String regex = URL + "/[-a-zA-Z0-9()@:%_\\+.~#?&//=]*(/|.html)";
+        ;
         return subURL.matches(regex);
     }
 
@@ -64,12 +65,10 @@ public class Parser extends RecursiveTask<Boolean> {
 
     @Override
     protected Boolean compute() {
-        if (Parser.isCanceled.get())
-        {
+        if (Parser.isCanceled.get()) {
             return PARSE_FAIL;
         }
-        if (!addNewUrl(url))
-        {
+        if (!addNewUrl(url)) {
             return PARSE_SUCCESS;
         }
 
@@ -77,8 +76,7 @@ public class Parser extends RecursiveTask<Boolean> {
         List<Parser> tasks = new ArrayList<>();
         try {
             Connection.Response response = networkService.getResponse(url);
-            if (!networkService.isAvailableContent(response))
-            {
+            if (!networkService.isAvailableContent(response)) {
                 return PARSE_SUCCESS;
             }
 
@@ -94,7 +92,7 @@ public class Parser extends RecursiveTask<Boolean> {
             }
             Thread.sleep(parserCfg.getThreadDelay());
 
-            for (ForkJoinTask task: tasks) {
+            for (ForkJoinTask task : tasks) {
                 parseSubTasks = parseSubTasks && (Boolean) task.invoke();
             }
         } catch (Exception e) {

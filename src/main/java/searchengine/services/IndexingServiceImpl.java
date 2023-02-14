@@ -46,8 +46,7 @@ public class IndexingServiceImpl implements IndexingService {
 
     @Override
     public IndexingResponse startIndexing() {
-        if (siteService.isIndexing())
-        {
+        if (siteService.isIndexing()) {
             return new IndexingResponse(false, "Идет индексация");
         }
 
@@ -73,7 +72,6 @@ public class IndexingServiceImpl implements IndexingService {
             }
         });
         thread.start();
-
         return new IndexingResponse(true, "");
     }
 
@@ -118,7 +116,6 @@ public class IndexingServiceImpl implements IndexingService {
             }
         });
         thread.start();
-
         return new IndexingResponse(true, "");
     }
 
@@ -130,7 +127,7 @@ public class IndexingServiceImpl implements IndexingService {
         List<Integer> lemmaIdList = indexService.getLemmaIdListByPageId(page.getId());
         if (lemmaIdList.size() > 0) {
             indexService.deleteByPageId(page.getId());
-            for (Integer lemmaId: lemmaIdList) {
+            for (Integer lemmaId : lemmaIdList) {
                 lemmaService.decreaseFrequencyByLemmaId(lemmaId);
             }
         }
