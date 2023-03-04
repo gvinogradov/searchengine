@@ -31,7 +31,7 @@
 ## Системные требования:
 - Java 17 или выше
 - Maven 3.8 или выше
-- MySql 8 или выше
+- PostgreSQL
 
 ## Запуск проекта
 Перед запуском проекта убедитесь, что Maven установлен правильно командой mvn -v, добавьте путь к каталогу bin в переменную окружения path.
@@ -43,7 +43,7 @@ spring:
   datasource:
     username: YOUR_LOGIN
     password: YOUR_PASSWORD
-    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+    url: jdbc:postgresql://localhost:5432/search_engine
 ```
 
 #### ШАГ 1. 
@@ -57,3 +57,9 @@ spring:
 #### ШАГ 3.
 
 Запустите проект командой: `java -jar SearchEngine-1.0-SNAPSHOT.jar` (application.yaml должен быть в этой же папке)
+
+## Запуск проекта в docker
+
+Перед запуском должен быть запущен контейнер с базой данных с алиасом db.
+
+Для запуска выполнить run.sh
