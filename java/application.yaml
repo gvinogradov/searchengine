@@ -1,0 +1,42 @@
+server:
+  port: 8080
+
+spring:
+  datasource:
+    username: root
+    password: Ac12345678
+    url: jdbc:mysql://localhost:3306/search_engine?useSSL=false&requireSSL=false&allowPublicKeyRetrieval=true
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+indexing-settings:
+  sites:
+    - url: https://playback.ru
+      name: PlayBack.Ru
+    - url: https://dombulgakova.ru
+      name: Булгаковский дом
+    - url: http://cimus.biz
+      name: DOM
+    - url: https://www.svetlovka.ru
+      name: Центральная городская молодежная библиотека
+    - url: https://lalabla.ru
+      name: Не существующий
+
+parsing-settings:
+  user-agent: SearchBot/2.0
+  referer: https://yandex.ru
+  contentType: text/html; charset=utf-8
+  timeout: 15_000 # ms
+  thread-delay: 150 # ms
+  parallelism: 10
+
+search-settings:
+  limit: 20
+  offset: 0
+  threshold: 100000
+  snippetSize: 50

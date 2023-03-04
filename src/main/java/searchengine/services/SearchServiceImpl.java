@@ -57,16 +57,20 @@ public class SearchServiceImpl implements SearchService {
         searchCfg.setThreshold(defaultSearchCfg.getThreshold());
         searchCfg.setSnippetSize(defaultSearchCfg.getSnippetSize());
         if (searchCfg.getQuery().isEmpty()) {
-            return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"), HttpStatus.OK);
+            return new ResponseEntity<>(new SearchError(false, "Задан пустой поисковый запрос"),
+                    HttpStatus.OK);
         }
         if (searchCfg.getLimit() == 0) {
             searchCfg.setLimit(defaultSearchCfg.getLimit());
         }
 
-        Integer siteId = searchCfg.getSite() == null ? null : siteService.getByUrl(searchCfg.getSite()).getId();
+        Integer siteId = searchCfg.getSite() == null ? null
+                : siteService.getByUrl(searchCfg.getSite()).getId();
 
         Map<String, Integer> lemmasFrequency = lemmaService.collectLemmaFrequency(searchCfg, siteId);
-        List<String> sortedLemmas = lemmasFrequency.entrySet().stream().sorted(Map.Entry.comparingByValue()).map(l -> l.getKey()).toList();
+        List<String> sortedLemmas = lemmasFrequency.entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .map(l -> l.getKey()).toList();
 
         List<PageRelevanceResponse> pagesRelevance = pageService.getPagesRelevance(sortedLemmas, siteId);
         SearchResponse response = createResponse(pagesRelevance, sortedLemmas, searchCfg);
