@@ -12,9 +12,12 @@ public interface LemmaRepository extends JpaRepository<Lemma, Integer> {
 
     @Transactional
     @Modifying(clearAutomatically = true)
+//    @Query(value = "INSERT INTO lemmas (site_id, lemma, frequency) " +
+//            "VALUES (?1, ?2, ?3) " +
+//            "ON DUPLICATE KEY UPDATE frequency=frequency + ?3", nativeQuery = true)
     @Query(value = "INSERT INTO lemmas (site_id, lemma, frequency) " +
             "VALUES (?1, ?2, ?3) " +
-            "ON DUPLICATE KEY UPDATE `frequency`=`frequency` + ?3", nativeQuery = true)
+            "ON CONFLICT (site_id, lemma) DO UPDATE SET frequency=lemmas.frequency + ?3", nativeQuery = true)
     void merge(int siteId, String lemma, int frequency);
 
     @Transactional

@@ -1,4 +1,4 @@
 #!/bin/bash
 
-docker build -t docker-java:webchecker .
-docker run -p 8085:8085 docker-java:webchecker
+docker build -t docker-java:searchengine .
+docker run -d --name app --link db:db -p 8080:8080 docker-java:searchengine

@@ -14,7 +14,6 @@ public class Site {
     private int id;
 
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "ENUM('INDEXING', 'INDEXED', 'FAILED')", nullable = false)
     Status status;
 
     @Column(name = "status_time", nullable = false)

@@ -6,7 +6,8 @@ import javax.persistence.*;
 
 @Data
 @Entity
-@Table(name = "pages")
+@Table(name = "pages",
+        uniqueConstraints=@UniqueConstraint(columnNames={"site_id", "path"}))
 public class Page {
 
     public Page() {
@@ -27,13 +28,14 @@ public class Page {
     @JoinColumn(name = "site_id", nullable = false)
     private Site site;
 
-    @Column(columnDefinition = "TEXT NOT NULL, UNIQUE KEY uk_site_path(site_id,path(500))")
+//    @Column(columnDefinition = "TEXT NOT NULL, UNIQUE KEY uk_site_path(site_id,path(500))")
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String path;
 
     @Column(nullable = false)
     private Integer code;
 
-    @Column(columnDefinition = "MEDIUMTEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
 }
